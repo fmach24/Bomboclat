@@ -5,20 +5,28 @@ export default class GameScene extends Phaser.Scene {
 
     preload() {
         // mapa i tileset
-        // this.load.tilemapTiledJSON("map", "assets/map.tmj");
-        // this.load.image("tilesKey", "assets/tiles.png");
-        this.load.tilemapTiledJSON("map", "assets/beachMap.tmj");
-        this.load.image("tilesKey", "assets/beachTiles.png");
-
-
+        this.load.tilemapTiledJSON("beachMap", "assets/beachMap.tmj");
+        this.load.image("beachTiles", "assets/beachTiles.png");
         // sprite gracza
         this.load.spritesheet("player", "assets/1x1.png", {
             frameWidth: 64,
             frameHeight: 64
         });
-
-        // sprite powerupa (prosty obrazek)
-        // this.load.image("powerup", "assets/sprites/powerup.png");
+        // sprite powerup0
+        this.load.spritesheet("powerup0", "assets/1x1.png", {
+            frameWidth: 64,
+            frameHeight: 64
+        });
+        // sprite powerup1
+        this.load.spritesheet("powerup1", "assets/1x1.png", {
+            frameWidth: 64,
+            frameHeight: 64
+        });
+        // sprite powerup2
+        this.load.spritesheet("powerup2", "assets/1x1.png", {
+            frameWidth: 64,
+            frameHeight: 64
+        });
     }
 
     create(data) {
@@ -36,8 +44,8 @@ export default class GameScene extends Phaser.Scene {
         console.log("My player ID:", playerId);
         console.log("My socket:", socket);
         // Tworzymy mapę
-        const map = this.make.tilemap({ key: "map" });
-        const tileset = map.addTilesetImage("tiles", "tilesKey");
+        const map = this.make.tilemap({ key: mapName + "Map" });
+        const tileset = map.addTilesetImage("tiles", mapName + "Tiles");
 
         // 2 warstwy kafelkowe
         const groundLayer = map.createLayer("groundLayer", tileset, 0, 0);
@@ -60,9 +68,6 @@ export default class GameScene extends Phaser.Scene {
             this.player.setCollideWorldBounds(true);
         }
 
-        // 📌 Warstwa obiektów: Powerups
-        // const powerupLayer = map.getObjectLayer("Powerups");
-
         // if (powerupLayer) {
         //     powerupLayer.objects.forEach(obj => {
         //         if (obj.name.startsWith("powerup")) {
@@ -78,13 +83,42 @@ export default class GameScene extends Phaser.Scene {
         // Kamera podąża za graczem
         this.cameras.main.startFollow(this.player);
         this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+
+        // 📌 Warstwa obiektów: Powerups
+        this.powerups = this.physics.add.group();
+        // const powerupSpawns = map.getObjectLayer("powerupSpawns");
+
+        // Obsługa zdarzenia pojawienia się powerupa
+        socket.on('spawnPowerup', (data) => {
+            console.log("Received spawnPowerup event:", data);
+            const { x, y, type } = data;
+            const powerupKey = 'powerup' + type; // Zakładamy, że masz różne klucze dla różnych typów powerupów
+            const powerup = this.physics.add.sprite(x * 64 + 32, y * 64 + 32, powerupKey);
+            powerup.setData("x", x, "y", y, "type", type);
+            this.powerups.add(powerup);
+
+            //zebranie powerupa
+            this.physics.add.overlap(this.player, powerup, (player, powerup) => {
+                socket.emit('pickedPowerup', { playerId, x: powerup.getData('x'), y: powerup.getData('y'), type: powerup.getData('type') });
+                // powerup.destroy(); // usuń powerupa z mapy
+            });
+        });
+
+        socket.on('destroyPowerup', (data) => {
+            const { x, y } = data;
+            const powerup = this.powerups.getChildren().find(p => p.getData('x') === x && p.getData('y') === y);
+            if (powerup) {
+                powerup.destroy();
+            }
+        });
+
     }
 
     update() {
         // proste sterowanie WSAD
         const cursors = this.input.keyboard.createCursorKeys();
 
-        const speed = 150;
+        const speed = 300;
         this.player.setVelocity(0);
 
         if (cursors.left.isDown) {

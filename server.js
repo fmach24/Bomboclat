@@ -9,16 +9,28 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-let playerId = 0;
 let mapName = "";
 const sockets = {};
 const players = {};
+
+//tworzenie mapy
+const map = Array.from({ length: 10 }, () =>
+    Array.from({ length: 10 }, () => ({ bomb: false, powerup: false, wall: false }))
+);
+
+for (let i = 0; i < 10; i++) {
+    map[i][0].wall = true;
+    map[i][9].wall = true;
+    map[0][i].wall = true;
+    map[9][i].wall = true;
+}
+// console.log("Map:", map);
 
 io.on("connection", (socket) => {
     socket.on("registerPlayer", (data) => {
 
         // playerId = Object.keys(sockets).length + 1;
-        playerId = uuidv4();
+        const playerId = uuidv4();
 
         sockets[socket.id] = {
             nick: data.nick,
@@ -31,17 +43,49 @@ io.on("connection", (socket) => {
 
         console.log("User connected:", socket.id);
         console.log("Current sockets:", sockets);
-        
+
         //gdy jest 4 graczy
         if (Object.keys(sockets).length === 2) {
             mapName = "beach";
             io.emit("startGame", sockets, players, mapName); // wyślij sygnał do wszystkich, że gra się zaczyna
         }
+
+        //obsluga powerupow
+        setInterval(() => {
+            // Wybierz losowe współrzędne
+            const x = Math.floor(Math.random() * Object.keys(map).length);
+            const y = Math.floor(Math.random() * Object.keys(map).length);
+
+            const type = Math.floor(Math.random() * 3);
+
+            if (!map[x][y].wall && !map[x][y].bomb && !map[x][y].powerup) {
+                map[x][y].powerup = true;
+                io.emit('spawnPowerup', { x, y, type: type });
+            }
+            else {
+                console.log("zajete miejsce");
+            }
+        
+            console.log("POWERUP:", x, y);
+            console.log("TYPE:", type);
+        }, 10000); // co 0.2 sekund
+
+        //TODO: nie usuwa powerupa z tablicy mapy, jakies zjebane typy chyba
+        //obsługa zebrania powerupa
+        socket.on('pickedPowerup', (data) => {
+            //server wie jaki gracz ma powerup
+            const { playerId, x, y, type } = data;
+            console.log(`Player ${playerId} picked up powerup at (${x}, ${y}) of type ${type}`);
+            // map[x][y].powerup = false;
+            io.emit('destroyPowerup', { x, y });
+        });
     });
 
+
+//TODO: naprawic usuwanie graczy i zmienic zeby po uuid bylo (maybe sesja pozniej)
     socket.on("disconnect", () => {
         delete sockets[socket.id];
-        delete players[playerId];
+        delete players[sockets[socket.id]?.id];
 
         console.log("User disconnected:", socket.id);
         console.log("Current sockets:", sockets);
