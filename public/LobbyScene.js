@@ -36,11 +36,11 @@ export default class LobbyScene extends Phaser.Scene {
             socket.emit("registerPlayer", { nick });
         });
 
-        socket.on("startGame", (sockets, players) => {
+        socket.on("startGame", (sockets, players, mapName) => {
 
             const playerId = sockets[socket.id].id;
             
-            this.scene.start('GameScene', { players: players, playerId: playerId, socket: socket});
+            this.scene.start('GameScene', { players: players, playerId: playerId, socket: socket, mapName: mapName });
         });
 
     }

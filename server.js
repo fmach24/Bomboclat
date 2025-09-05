@@ -1,6 +1,7 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
+import { v4 as uuidv4 } from "uuid";
 
 const app = express();
 const server = http.createServer(app);
@@ -9,13 +10,15 @@ const io = new Server(server);
 app.use(express.static("public"));
 
 let playerId = 0;
+let mapName = "";
 const sockets = {};
 const players = {};
 
 io.on("connection", (socket) => {
     socket.on("registerPlayer", (data) => {
 
-        playerId = Object.keys(sockets).length + 1;
+        // playerId = Object.keys(sockets).length + 1;
+        playerId = uuidv4();
 
         sockets[socket.id] = {
             nick: data.nick,
@@ -31,7 +34,8 @@ io.on("connection", (socket) => {
         
         //gdy jest 4 graczy
         if (Object.keys(sockets).length === 2) {
-            io.emit("startGame", sockets, players); // wyślij sygnał do wszystkich, że gra się zaczyna
+            mapName = "beach";
+            io.emit("startGame", sockets, players, mapName); // wyślij sygnał do wszystkich, że gra się zaczyna
         }
     });
 

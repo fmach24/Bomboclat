@@ -5,13 +5,16 @@ export default class GameScene extends Phaser.Scene {
 
     preload() {
         // mapa i tileset
-        this.load.tilemapTiledJSON("map", "assets/map.tmj");
-        this.load.image("tilesKey", "assets/tiles.png");
+        // this.load.tilemapTiledJSON("map", "assets/map.tmj");
+        // this.load.image("tilesKey", "assets/tiles.png");
+        this.load.tilemapTiledJSON("map", "assets/beachMap.tmj");
+        this.load.image("tilesKey", "assets/beachTiles.png");
+
 
         // sprite gracza
-        this.load.spritesheet("player", "assets/player.png", {
-            frameWidth: 16,
-            frameHeight: 16
+        this.load.spritesheet("player", "assets/1x1.png", {
+            frameWidth: 64,
+            frameHeight: 64
         });
 
         // sprite powerupa (prosty obrazek)
@@ -21,21 +24,24 @@ export default class GameScene extends Phaser.Scene {
     create(data) {
 
         // alert(data.players);
-
+        const mapName = data.mapName;
         const players = data.players;
         const playerId = data.playerId;
         const socket = data.socket;
+
+        // this.load.tilemapTiledJSON("map", "assets/" + mapName + "Map.tmj");
+        // this.load.image("tilesKey", "assets/" + mapName + "Tiles.png");
 
         console.log("Players in GameScene:", players);
         console.log("My player ID:", playerId);
         console.log("My socket:", socket);
         // Tworzymy mapę
         const map = this.make.tilemap({ key: "map" });
-        const tileset = map.addTilesetImage("kafle", "tilesKey");
+        const tileset = map.addTilesetImage("tiles", "tilesKey");
 
         // 2 warstwy kafelkowe
-        const groundLayer = map.createLayer("layer2", tileset, 0, 0);
-        const wallsLayer = map.createLayer("layer1", tileset, 0, 0);
+        const groundLayer = map.createLayer("groundLayer", tileset, 0, 0);
+        const wallsLayer = map.createLayer("wallsLayer", tileset, 0, 0);
 
         // Kolizje dla ścian
         // wallsLayer.setCollisionByProperty({ collides: true });
@@ -46,7 +52,7 @@ export default class GameScene extends Phaser.Scene {
         const spawnLayer = map.getObjectLayer("spawnPoints");
 
         // znajdź obiekt o nazwie spawn1
-        const spawnPoint = spawnLayer.objects.find(obj => obj.name === "spawn" + playerId);
+        const spawnPoint = spawnLayer.objects.find(obj => obj.name === "spawn1");
 
         if (spawnPoint) {
             // utwórz sprite gracza w pozycji spawn1
