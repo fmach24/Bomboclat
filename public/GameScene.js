@@ -17,18 +17,18 @@ export default class GameScene extends Phaser.Scene {
         });
         // sprite powerup0
         this.load.spritesheet("powerup0", "assets/1x1.png", {
-            frameWidth: 64,
-            frameHeight: 64
+            frameWidth: 32,
+            frameHeight: 32
         });
         // sprite powerup1
         this.load.spritesheet("powerup1", "assets/1x1.png", {
-            frameWidth: 64,
-            frameHeight: 64
+            frameWidth: 32,
+            frameHeight: 32
         });
         // sprite powerup2
         this.load.spritesheet("powerup2", "assets/1x1.png", {
-            frameWidth: 64,
-            frameHeight: 64
+            frameWidth: 32,
+            frameHeight: 32
         });
     }
 
@@ -56,7 +56,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.socket.on('destroyPowerup', (data) => { this.destroyPowerup(data); });
 
-        this.socket.on('update', (data) => { this.update(data); });
+        this.socket.on('update', (data) => { this.updatePlayers(data); });
 
     }
 
@@ -169,9 +169,12 @@ export default class GameScene extends Phaser.Scene {
 
         Object.values(players).forEach(ply => {
 
-            const sprite = this.playerGroup.children.find(x => x.name == ply.id);
-            console.log(players)
-            sprite.setPosition(ply.x, ply.y)
+            const sprite = this.playerGroup.getChildren().find(x => x.name == ply.id);
+            if (sprite && ply.x !== null && ply.y !== null) {
+                console.log(players)
+                sprite.setPosition(ply.x, ply.y)
+            }
+
         });
     }
 

@@ -33,6 +33,7 @@ io.on("connection", (socket) => {
 
     let playerId = null;
 
+    // TODO: czemu wszystko jest w jednym onie?
     socket.on("registerPlayer", (data) => {
 
         // playerId = Object.keys(sockets).length + 1;
@@ -46,9 +47,9 @@ io.on("connection", (socket) => {
         players[playerId] = {
             nick: data.nick,
             id: playerId,
-            spawn:"",
+            spawn: "",
             x: null,
-            y:null
+            y: null
         };
 
         console.log("User connected:", socket.id);
@@ -57,11 +58,11 @@ io.on("connection", (socket) => {
         //gdy jest 4 graczy
         if (Object.keys(sockets).length === 2) {
             mapName = "beach";
-            
+
             //tmp assign some start positions.
             let i = 1;
-            for(const key of Object.keys(players)){
-                players[key].spawn = 'spawn'+i ;
+            for (const key of Object.keys(players)) {
+                players[key].spawn = 'spawn' + i;
                 i++;
             }
 
@@ -83,7 +84,7 @@ io.on("connection", (socket) => {
             else {
                 console.log("zajete miejsce");
             }
-        
+
             console.log("POWERUP:", x, y);
             console.log("TYPE:", type);
         }, 10000); // co 0.2 sekund
@@ -99,7 +100,7 @@ io.on("connection", (socket) => {
         });
 
 
-        socket.on('moved', (data)=>{
+        socket.on('moved', (data) => {
 
             players[data.id].x = data.x
             players[data.id].y = data.y
