@@ -1,7 +1,5 @@
 export default class GameScene extends Phaser.Scene {
 
- 
-
     constructor() {
         super("GameScene");
        
@@ -47,12 +45,8 @@ export default class GameScene extends Phaser.Scene {
         this.players = data.players;
         this.playerId = data.playerId;
         this.socket = data.socket;
-<<<<<<< HEAD
         this.speed = 300;
-
-=======
         this.map = null;
->>>>>>> 468284d1d83581a14b69ec4a0619926ef0afac50
 
         console.log("Players in GameScene:", this.players);
         console.log("My player ID:", this.playerId);
