@@ -29,37 +29,41 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+
+    //start scene -> create
     create(data) {
 
         // alert(data.players);
-        const mapName = data.mapName;
-        const players = data.players;
-        const playerId = data.playerId;
-        const socket = data.socket;
+        this.mapName = data.mapName;
+        this.players = data.players;
+        this.playerId = data.playerId;
+        this.socket = data.socket;
 
-        // this.load.tilemapTiledJSON("map", "assets/" + mapName + "Map.tmj");
-        // this.load.image("tilesKey", "assets/" + mapName + "Tiles.png");
 
-        console.log("Players in GameScene:", players);
-        console.log("My player ID:", playerId);
-        console.log("My socket:", socket);
+        console.log("Players in GameScene:", this.players);
+        console.log("My player ID:", this.playerId);
+        console.log("My socket:", this.socket);
         
-        this.buildMap();
+        this.buildMap(data);
 
         //game network event handlers:
 
-        socket.on('spawnPowerup', this.spawnPowerup);
+        this.socket.on('spawnPowerup', this.spawnPowerup);
 
-        socket.on('destroyPowerup', this.destroyPowerup);
+        this.socket.on('destroyPowerup', this.destroyPowerup);
 
-        socket.on('update', this.updatePlayers)
+        this.socket.on('update', this.updatePlayers);
 
     }
 
+
+
     buildMap() {
+        // this.load.tilemapTiledJSON("map", "assets/" + mapName + "Map.tmj");
+        // this.load.image("tilesKey", "assets/" + mapName + "Tiles.png");
         // Tworzymy mapę
-        const map = this.make.tilemap({ key: mapName + "Map" });
-        const tileset = map.addTilesetImage("tiles", mapName + "Tiles");
+        const map = this.make.tilemap({ key: this.mapName + "Map" });
+        const tileset = map.addTilesetImage("tiles", this.mapName + "Tiles");
 
         // 2 warstwy kafelkowe
         const groundLayer = map.createLayer("groundLayer", tileset, 0, 0);
@@ -73,14 +77,30 @@ export default class GameScene extends Phaser.Scene {
         // Warstwa obiektów: Spawns
         const spawnLayer = map.getObjectLayer("spawnPoints");
 
-        // znajdź obiekt o nazwie spawn1
-        const spawnPoint = spawnLayer.objects.find(obj => obj.name === "spawn1");
+        //Osobno nasz lokalny gracz a osobno reszta otrzyjmuje polozenie.
+        let spawntag = this.players[this.playerId].spawn;
+        let spawnPoint = spawnLayer.objects.find(obj => obj.name === spawntag);
 
         if (spawnPoint) {
             // utwórz sprite gracza w pozycji spawn1
             this.player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, "player");
             this.player.setCollideWorldBounds(true);
         }
+        this.physics.add.collider(this.player, wallsLayer);
+
+
+        Object.values(this.players).forEach(ply => {
+            if (ply.id != this.playerId) {
+                spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
+                const current = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'player');
+
+                this.physics.add.collider(current, wallsLayer);
+
+                //assign proper id so we can later on find exact sprite:
+                current.name = ply.id;
+            }
+
+        });
 
         // if (powerupLayer) {
         //     powerupLayer.objects.forEach(obj => {
@@ -91,8 +111,7 @@ export default class GameScene extends Phaser.Scene {
         //     });
         // }
 
-        // Kolizja gracza ze ścianami
-        this.physics.add.collider(this.player, wallsLayer);
+
 
         // Kamera podąża za graczem
         this.cameras.main.startFollow(this.player);
@@ -101,6 +120,8 @@ export default class GameScene extends Phaser.Scene {
         // 📌 Warstwa obiektów: Powerups
         this.powerups = this.physics.add.group();
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
+
+
     }
 
     //NETWORK:
@@ -131,13 +152,18 @@ export default class GameScene extends Phaser.Scene {
 
 
     //proceeds update from the server.
-    updatePlayers(data){
-        data.players.forEach(element => {
-            
+    updatePlayers(players){
+        
+        Object.values(players).forEach(ply => {
+            const sprite = this.children.getByName(ply.id)
+            sprite.setPosition(ply.x, ply.y)
         });
     }
 
     
+    sendUpdate(){
+        this.socket.emit('moved', {id:this.playerId, x:this.player.x, y:this.player.y})
+    }
 
     update() {
         // proste sterowanie WSAD
@@ -156,6 +182,9 @@ export default class GameScene extends Phaser.Scene {
             this.player.setVelocityY(-speed);
         } else if (cursors.down.isDown) {
             this.player.setVelocityY(speed);
+        }
+        if(this.player.body.velocity.length() > 0){
+            this.sendUpdate()
         }
     }
 }

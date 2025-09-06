@@ -41,6 +41,8 @@ io.on("connection", (socket) => {
 
         players[playerId] = {
             nick: data.nick,
+            id: playerId,
+            spawn:"",
             x: null,
             y:null
         };
@@ -51,6 +53,14 @@ io.on("connection", (socket) => {
         //gdy jest 4 graczy
         if (Object.keys(sockets).length === 2) {
             mapName = "beach";
+            
+            //tmp assign some start positions.
+            let i = 1;
+            for(const key of Object.keys(players)){
+                players[key].spawn = 'spawn'+i ;
+                i++;
+            }
+
             io.emit("startGame", sockets, players, mapName); // wyślij sygnał do wszystkich, że gra się zaczyna
         }
 
@@ -86,8 +96,10 @@ io.on("connection", (socket) => {
 
 
         socket.on('moved', (data)=>{
-            players[playerId].x = data.x
-            players[playerId].y = data.y
+
+            console.log(data)
+            players[data.id].x = data.x
+            players[data.id].y = data.y
 
             
             io.emit('update', players)
