@@ -27,10 +27,13 @@ for (let i = 0; i < 10; i++) {
 // console.log("Map:", map);
 
 io.on("connection", (socket) => {
+
+    let playerId = null;
+
     socket.on("registerPlayer", (data) => {
 
         // playerId = Object.keys(sockets).length + 1;
-        const playerId = uuidv4();
+        playerId = uuidv4();
 
         sockets[socket.id] = {
             nick: data.nick,
@@ -46,7 +49,7 @@ io.on("connection", (socket) => {
 
         //gdy jest 4 graczy
         if (Object.keys(sockets).length === 2) {
-            mapName = "beach";
+            const mapName = "beach";
             io.emit("startGame", sockets, players, mapName); // wyślij sygnał do wszystkich, że gra się zaczyna
         }
 
@@ -82,7 +85,7 @@ io.on("connection", (socket) => {
     });
 
 
-//TODO: naprawic usuwanie graczy i zmienic zeby po uuid bylo (maybe sesja pozniej)
+    //TODO: naprawic usuwanie graczy i zmienic zeby po uuid bylo (maybe sesja pozniej), do tego sensownie playerid trzymac i uzywac
     socket.on("disconnect", () => {
         delete sockets[socket.id];
         delete players[sockets[socket.id]?.id];
