@@ -62,7 +62,8 @@ io.on("connection", (socket) => {
             spawn: "",
             health: HP_MAX,
             x: null,
-            y: null
+            y: null,
+            powerups: [false, false, false] // przykładowe powerupy
         };
 
         console.log("User connected:", socket.id);
@@ -110,7 +111,19 @@ io.on("connection", (socket) => {
         const { id, x, y, type } = data;
         console.log(id, x, y, type);
         map[x][y].powerup = false;
+
+        players[id].powerups[type] = true; // przyznaj powerup graczowi
+        console.log(players[id]);
+        io.emit('update', players); // wyślij zaktualizowaną listę graczy do wszystkich klientów
+
         io.emit('destroyPowerup', { x, y });
+
+        setTimeout(() => {
+            players[id].powerups[type] = false;
+            console.log("Graczowi konczy sie powerup", players[id]);
+            io.emit('update', players); // wyślij zaktualizowaną listę graczy do wszystkich klientów
+        }, 10000); // powerup trwa 10 sekund
+        
     });
 
 
