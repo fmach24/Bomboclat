@@ -41,6 +41,7 @@ export default class GameScene extends Phaser.Scene {
         this.players = data.players;
         this.playerId = data.playerId;
         this.socket = data.socket;
+        this.speed = 300;
 
 
         console.log("Players in GameScene:", this.players);
@@ -94,6 +95,7 @@ export default class GameScene extends Phaser.Scene {
             this.player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, "player");
             this.player.setCollideWorldBounds(true);
             this.playerGroup.add(this.player)
+            this.player.name = this.playerId; // assign proper id so we can later on find exact sprite:
         }
         this.physics.add.collider(this.player, wallsLayer);
 
@@ -170,9 +172,25 @@ export default class GameScene extends Phaser.Scene {
         Object.values(players).forEach(ply => {
 
             const sprite = this.playerGroup.getChildren().find(x => x.name == ply.id);
-            if (sprite && ply.x !== null && ply.y !== null) {
-                console.log(players)
-                sprite.setPosition(ply.x, ply.y)
+            if (sprite && (ply.x != null) && (ply.y != null)) {
+                // console.log(players)
+
+                console.log(ply, players);
+
+                if (ply.id == this.playerId) {
+                    // Domyślna prędkość
+                    // this.speed = 300;
+                    if (ply.powerups[0]) {
+                        this.speed = 600; // Powerup SPEED
+                    }
+                    else {
+                        this.speed = 300; // Brak powerupu SPEED
+                    }
+                }
+                else {
+                    sprite.setPosition(ply.x, ply.y);
+                }
+
             }
 
         });
@@ -187,19 +205,18 @@ export default class GameScene extends Phaser.Scene {
         // proste sterowanie WSAD
         const cursors = this.input.keyboard.createCursorKeys();
 
-        const speed = 300;
         this.player.setVelocity(0);
 
         if (cursors.left.isDown) {
-            this.player.setVelocityX(-speed);
+            this.player.setVelocityX(-this.speed);
         } else if (cursors.right.isDown) {
-            this.player.setVelocityX(speed);
+            this.player.setVelocityX(this.speed);
         }
 
         if (cursors.up.isDown) {
-            this.player.setVelocityY(-speed);
+            this.player.setVelocityY(-this.speed);
         } else if (cursors.down.isDown) {
-            this.player.setVelocityY(speed);
+            this.player.setVelocityY(this.speed);
         }
         if (this.player.body.velocity.length() > 0) {
             this.sendUpdate()
