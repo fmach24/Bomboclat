@@ -107,18 +107,50 @@ export default class GameScene extends Phaser.Scene {
 
 
         Object.values(this.players).forEach(ply => {
-            if (ply.id != this.playerId) {
-                spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
-                const current = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'player');
+            if (ply.id !== this.playerId) {
+                const spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
 
-                this.physics.add.collider(current, wallsLayer);
+                // Create main sprite
+                const sprite = this.add.sprite(0, 0, 'player');
 
-                this.playerGroup.add(current);
-                //assign proper id so we can later on find exact sprite:
-                current.name = ply.id;
+                // Create nickname text
+                const nickname = this.add.text(0, -56, ply.nick || "NICK", {
+                    fontSize: "16px",
+                    color: "#fff",
+                    stroke: "#000",
+                    strokeThickness: 3
+                }).setOrigin(0.5);
+
+                const hp_bar = this.add.text(0, -40, "100%", {
+                    fontSize: "16px",
+                    color: "#47c070ff",
+                    stroke: "#000",
+                    strokeThickness: 4
+                }).setOrigin(0.5);
+
+                hp_bar.name = "hp_bar";
+
+                // Put sprite + text into a container
+                const player = this.add.container(spawnPoint.x, spawnPoint.y, [sprite, nickname, hp_bar]);
+
+                // Enable physics on the container
+                this.physics.world.enable(player);
+
+                // Adjust body size to match sprite
+                player.body.setSize(sprite.width, sprite.height);
+                player.body.setOffset(-sprite.width / 2, -sprite.height / 2);
+
+                // Add collisions
+                this.physics.add.collider(player, wallsLayer);
+
+                // Add to player group
+                this.playerGroup.add(player);
+
+                // Assign ID for later lookup
+                player.name = ply.id;
             }
-
         });
+
 
         // if (powerupLayer) {
         //     powerupLayer.objects.forEach(obj => {

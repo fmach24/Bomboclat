@@ -12,6 +12,7 @@ app.use(express.static("public"));
 const DETONATION_TIME = 2.5 * 1000;
 const STANDARD_RANGE = 3;
 const BUFFED_RANGE = 4;
+const HP_MAX = 3;
 // TODO: map name powninno byc ustawiane przez graczy, na razei jest hardcoded
 let mapName = "";
 const sockets = {};
@@ -59,6 +60,7 @@ io.on("connection", (socket) => {
             nick: data.nick,
             id: playerId,
             spawn: "",
+            health: HP_MAX,
             x: null,
             y: null
         };
@@ -117,7 +119,7 @@ io.on("connection", (socket) => {
         players[data.id].x = data.x
         players[data.id].y = data.y
 
-        console.log(data.id, 'zmiana')
+
         io.emit('update', players)
     })
 
@@ -146,10 +148,13 @@ io.on("connection", (socket) => {
                 const playerGridX = toMapIndex(snapToGrid(p.x, 64),64);
                 const playerGridY = toMapIndex(snapToGrid(p.y, 64),64);
 
-                console.log(x,y);
-                console.log(playerGridX, playerGridX)
+                //No damage from your own bomb?
                 if (playerGridX == x && playerGridY == y) {
-                    console.log("hit!")
+                    
+                    //TODO: probably wanna have some animation for damage
+                    p.health--;
+                    io.emit('update', players);
+                    console.log(p.health, p.nick);
                 }
 
             });
