@@ -79,55 +79,54 @@ io.on("connection", (socket) => {
 
             io.emit("startGame", sockets, players, mapName); // wyślij sygnał do wszystkich, że gra się zaczyna
         }
-
-        //obsluga powerupow
-        setInterval(() => {
-            // Wybierz losowe współrzędne
-            const x = Math.floor(Math.random() * Object.keys(map).length);
-            const y = Math.floor(Math.random() * Object.keys(map).length);
-
-            const type = Math.floor(Math.random() * 3);
-
-            if (!map[x][y].wall && !map[x][y].bomb && !map[x][y].powerup) {
-                map[x][y].powerup = true;
-                io.emit('spawnPowerup', { x, y, type: type });
-            }
-            else {
-                console.log("zajete miejsce");
-            }
-
-            console.log("POWERUP:", x, y);
-            console.log("TYPE:", type);
-        }, 10000); // co 0.2 sekund
-
-        //TODO: nie usuwa powerupa z tablicy mapy, jakies zjebane typy chyba
-        //obsługa zebrania powerupa
-        socket.on('pickedPowerup', (data) => {
-            //server wie jaki gracz ma powerup
-            const { id, x, y, type } = data;
-            console.log(id, x, y, type);
-            map[x][y].powerup = false;
-
-            
-            io.emit('destroyPowerup', { x, y });
-        });
-
-
-        socket.on('moved', (data) => {
-
-            players[data.id].x = data.x
-            players[data.id].y = data.y
-
-            
-            io.emit('update', players)
-        })
     });
+
+    //obsluga powerupow
+    setInterval(() => {
+        // Wybierz losowe współrzędne
+        const x = Math.floor(Math.random() * Object.keys(map).length);
+        const y = Math.floor(Math.random() * Object.keys(map).length);
+
+        const type = Math.floor(Math.random() * 3);
+
+        if (!map[x][y].wall && !map[x][y].bomb && !map[x][y].powerup) {
+            map[x][y].powerup = true;
+            io.emit('spawnPowerup', { x, y, type: type });
+        }
+        else {
+            console.log("zajete miejsce");
+        }
+
+        console.log("POWERUP:", x, y);
+        console.log("TYPE:", type);
+    }, 10000); // co 0.2 sekund
+
+    //TODO: dokonczyc obsluge powerupow
+    //obsługa zebrania powerupa
+    socket.on('pickedPowerup', (data) => {
+        //server wie jaki gracz ma powerup
+        const { id, x, y, type } = data;
+        console.log(id, x, y, type);
+        map[x][y].powerup = false;
+        io.emit('destroyPowerup', { x, y });
+    });
+
+
+    socket.on('moved', (data) => {
+
+        players[data.id].x = data.x
+        players[data.id].y = data.y
+
+        console.log(data.id, 'zmiana')
+        io.emit('update', players)
+    })
+
 
 
     //TODO: naprawic usuwanie graczy i zmienic zeby po uuid bylo (maybe sesja pozniej), do tego sensownie playerid trzymac i uzywac
     socket.on("disconnect", () => {
         delete sockets[socket.id];
-        delete players[sockets[socket.id]?.id];
+        delete players[playerId];
 
         console.log("User disconnected:", socket.id);
         console.log("Current sockets:", sockets);
