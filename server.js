@@ -97,11 +97,10 @@ io.on("connection", (socket) => {
 
         socket.on('moved', (data)=>{
 
-            console.log(data)
             players[data.id].x = data.x
             players[data.id].y = data.y
 
-            
+            console.log(data.id, 'zmiana')
             io.emit('update', players)
         })
     });

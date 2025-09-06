@@ -1,3 +1,4 @@
+
 const socket = io();
 
 export default class LobbyScene extends Phaser.Scene {

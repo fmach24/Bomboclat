@@ -1,6 +1,9 @@
 export default class GameScene extends Phaser.Scene {
+
+    static instance = null;
     constructor() {
         super("GameScene");
+        GameScene.instance = this
     }
 
     preload() {
@@ -45,14 +48,15 @@ export default class GameScene extends Phaser.Scene {
         console.log("My socket:", this.socket);
         
         this.buildMap(data);
+        
 
         //game network event handlers:
 
-        this.socket.on('spawnPowerup', this.spawnPowerup);
+        this.socket.on('spawnPowerup', (data)=> {this.spawnPowerup(data);});
 
-        this.socket.on('destroyPowerup', this.destroyPowerup);
+        this.socket.on('destroyPowerup', (data)=> {this.destroyPowerup(data);});
 
-        this.socket.on('update', this.updatePlayers);
+        this.socket.on('update', (data)=>{ this.update(data); });
 
     }
 
@@ -74,6 +78,8 @@ export default class GameScene extends Phaser.Scene {
 
         wallsLayer.setCollisionByExclusion([-1]);
 
+
+
         // Warstwa obiektów: Spawns
         const spawnLayer = map.getObjectLayer("spawnPoints");
 
@@ -81,10 +87,13 @@ export default class GameScene extends Phaser.Scene {
         let spawntag = this.players[this.playerId].spawn;
         let spawnPoint = spawnLayer.objects.find(obj => obj.name === spawntag);
 
+        this.playerGroup = this.physics.add.group()
+
         if (spawnPoint) {
             // utwórz sprite gracza w pozycji spawn1
             this.player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, "player");
             this.player.setCollideWorldBounds(true);
+            this.playerGroup.add(this.player)
         }
         this.physics.add.collider(this.player, wallsLayer);
 
@@ -96,6 +105,7 @@ export default class GameScene extends Phaser.Scene {
 
                 this.physics.add.collider(current, wallsLayer);
 
+                this.playerGroup.add(current);
                 //assign proper id so we can later on find exact sprite:
                 current.name = ply.id;
             }
@@ -130,13 +140,14 @@ export default class GameScene extends Phaser.Scene {
     spawnPowerup(data) {
         console.log("Received spawnPowerup event:", data);
         const { x, y, type } = data;
-        const powerupKey = 'powerup' + type; // Zakładamy, że masz różne klucze dla różnych typów powerupów            const powerup = this.physics.add.sprite(x * 64 + 32, y * 64 + 32, powerupKey);
+        const powerupKey = 'powerup' + type; // Zakładamy, że masz różne klucze dla różnych typów powerupów            
+        const powerup = this.physics.add.sprite(x * 64 + 32, y * 64 + 32, powerupKey);
         powerup.setData("x", x, "y", y, "type", type);
         this.powerups.add(powerup);
 
         //zebranie powerupa
         this.physics.add.overlap(this.player, powerup, (player, powerup) => {
-            socket.emit('pickedPowerup', { playerId, x: powerup.getData('x'), y: powerup.getData('y'), type: powerup.getData('type') });
+            this.socket.emit('pickedPowerup', { id: this.playerId, x: powerup.getData('x'), y: powerup.getData('y'), type: powerup.getData('type') });
             // powerup.destroy(); // usuń powerupa z mapy
         });
     }
@@ -155,7 +166,9 @@ export default class GameScene extends Phaser.Scene {
     updatePlayers(players){
         
         Object.values(players).forEach(ply => {
-            const sprite = this.children.getByName(ply.id)
+
+            const sprite = this.playerGroup.children.find(x=> x.name == ply.id);
+            console.log(players)
             sprite.setPosition(ply.x, ply.y)
         });
     }
@@ -189,53 +202,3 @@ export default class GameScene extends Phaser.Scene {
     }
 }
 
-
-
-
-
-
-
-// const socket = io();
-
-// export default class GameScene extends Phaser.Scene {
-
-//     constructor() {
-//         super("GameScene");
-//         // this.player = null;
-//         // this.otherPlayers = {};
-//     }
-
-//     preload() {
-//         this.load.tilemapTiledJSON("map", "assets/map.tmj");
-
-//         // wczytujemy grafikę kafelków (musi się zgadzać nazwa z Tiled!)
-//         this.load.image("tilesKey", "assets/tiles.png");
-//     }
-
-//     create(data) {
-// //!!!!!s
-//         const players = data.players;
-//         console.log("Players in GameScene:", players);
-
-//         const map = this.make.tilemap({ key: "map" });
-
-//         // Pierwszy parametr = NAZWA TILESETU z Tiled (dokładnie), drugi = klucz obrazu z preload
-//         const tileset = map.addTilesetImage("kafle", "tilesKey");
-
-//         // "Warstwa1" zamień na faktyczną nazwę warstwy z Tiled
-//         const layer1 = map.createLayer("layer1", tileset, 0, 0);
-//         const layer2 = map.createLayer("layer2", tileset, 0, 0);
-
-//         layer1.setVisible(true);
-
-//         layer1.setDepth(1);
-//         layer2.setDepth(0);
-
-//         // (opcjonalnie) dopasuj rozmiar kamery do mapy:
-//         this.cameras.main.setBounds(0, 0, layer2.width, layer2.height);
-//     }
-
-//     update() {
-//         // Handle player movement and game logic here
-//     }
-// }
