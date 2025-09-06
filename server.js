@@ -9,6 +9,9 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
+const DETONATION_TIME = 2.5 * 1000;
+const STANDARD_RANGE = 3;
+const BUFFED_RANGE = 4;
 // TODO: map name powninno byc ustawiane przez graczy, na razei jest hardcoded
 let mapName = "";
 const sockets = {};
@@ -18,7 +21,7 @@ const players = {};
 
 //tworzenie mapy
 const map = Array.from({ length: 10 }, () =>
-    Array.from({ length: 10 }, () => ({ bomb: false, powerup: false, wall: false }))
+    Array.from({ length: 10 }, () => ({ bomb: null, powerup: false, wall: false }))
 );
 
 for (let i = 0; i < 10; i++) {
@@ -28,6 +31,10 @@ for (let i = 0; i < 10; i++) {
     map[9][i].wall = true;
 }
 // console.log("Map:", map);
+
+function snapToGrid(value, gridSize) {
+    return Math.floor(value / gridSize) * gridSize;
+}
 
 io.on("connection", (socket) => {
 
@@ -96,6 +103,8 @@ io.on("connection", (socket) => {
             const { id, x, y, type } = data;
             console.log(id, x, y, type);
             map[x][y].powerup = false;
+
+            
             io.emit('destroyPowerup', { x, y });
         });
 
@@ -105,7 +114,7 @@ io.on("connection", (socket) => {
             players[data.id].x = data.x
             players[data.id].y = data.y
 
-            console.log(data.id, 'zmiana')
+            
             io.emit('update', players)
         })
     });
@@ -120,8 +129,39 @@ io.on("connection", (socket) => {
         console.log("Current sockets:", sockets);
     });
 
-    //obsluga gry
+
+
+    const detonateBomb = ()=>{
+        console.log("wypierdolilolololo")
+    };
+
+    const isOnCooldown = ()=>{
+
+        return false;
+    }
+    const getRangeFor = (ply) =>{
+        return STANDARD_RANGE;
+    }
+
+    const 
+    socket.on("plantBomb", (ply)=>{
+
+        const bombX = snapToGrid(ply.x,64);
+        const bombY = snapToGrid(ply.y,64);
+        
+        if(!isOnCooldown(ply)){
+            setTimeout(()=>{
+                detonateBomb(bombX/64,bombY/64);
+            }, DETONATION_TIME);
+            console.log(bombX, bombY);
+            const bomb =  {range: getRangeFor(ply), id:ply.id, timeout: DETONATION_TIME, x: bombX, y:bombY};
+            map[Math.floor(bombX/64)][Math.floor(bombY/64)].bomb = bomb;
+
+            io.emit("newBomb", bomb);
+        }
+    })
 });
+
 
 
 server.listen(3000, () => {

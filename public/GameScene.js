@@ -1,9 +1,10 @@
 export default class GameScene extends Phaser.Scene {
 
-    static instance = null;
+ 
+
     constructor() {
         super("GameScene");
-        GameScene.instance = this
+       
     }
 
     preload() {
@@ -30,6 +31,11 @@ export default class GameScene extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 32
         });
+
+        this.load.spritesheet("bomb", "assets/tmp_bomb.png",{
+            frameWidth:64,
+            frameHeight:64
+        });
     }
 
 
@@ -41,7 +47,7 @@ export default class GameScene extends Phaser.Scene {
         this.players = data.players;
         this.playerId = data.playerId;
         this.socket = data.socket;
-
+        this.map = null;
 
         console.log("Players in GameScene:", this.players);
         console.log("My player ID:", this.playerId);
@@ -57,6 +63,8 @@ export default class GameScene extends Phaser.Scene {
         this.socket.on('destroyPowerup', (data) => { this.destroyPowerup(data); });
 
         this.socket.on('update', (data) => { this.updatePlayers(data); });
+
+        this.socket.on('newBomb', (data) => { this.newBomb(data); });
 
     }
 
@@ -131,6 +139,7 @@ export default class GameScene extends Phaser.Scene {
         this.powerups = this.physics.add.group();
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
 
+        this.bombGroup = this.physics.add.group();
 
     }
 
@@ -171,7 +180,7 @@ export default class GameScene extends Phaser.Scene {
 
             const sprite = this.playerGroup.getChildren().find(x => x.name == ply.id);
             if (sprite && ply.x !== null && ply.y !== null) {
-                console.log(players)
+                
                 sprite.setPosition(ply.x, ply.y)
             }
 
@@ -181,6 +190,19 @@ export default class GameScene extends Phaser.Scene {
 
     sendUpdate() {
         this.socket.emit('moved', { id: this.playerId, x: this.player.x, y: this.player.y })
+    }
+
+    newBomb(bomb){
+
+        const bombSprite = this.physics.add.sprite(bomb.x + 32,bomb.y + 32,"bomb");
+        this.bombGroup.add(bombSprite);
+        setTimeout(()=>{bombSprite.destroy();}, bomb.timeout);
+    }
+
+
+
+    plantBomb(){
+        this.socket.emit('plantBomb', { id: this.playerId, x: this.player.x, y: this.player.y });
     }
 
     update() {
@@ -204,6 +226,12 @@ export default class GameScene extends Phaser.Scene {
         if (this.player.body.velocity.length() > 0) {
             this.sendUpdate()
         }
+
+        if(cursors.space.isDown){
+            this.plantBomb();
+        }
     }
+
+
 }
 
