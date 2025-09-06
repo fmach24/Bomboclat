@@ -36,6 +36,10 @@ function snapToGrid(value, gridSize) {
     return Math.floor(value / gridSize) * gridSize;
 }
 
+function toMapIndex(value,gridSize){
+    return value / gridSize;
+}
+
 io.on("connection", (socket) => {
 
     let playerId = null;
@@ -131,31 +135,108 @@ io.on("connection", (socket) => {
 
 
 
-    const detonateBomb = ()=>{
-        console.log("wypierdolilolololo")
-    };
 
-    const isOnCooldown = ()=>{
-
-        return false;
-    }
-    const getRangeFor = (ply) =>{
-        return STANDARD_RANGE;
-    }
 
      
     socket.on("plantBomb", (ply)=>{
 
-        const bombX = snapToGrid(ply.x,64);
-        const bombY = snapToGrid(ply.y,64);
-        
-        if(!isOnCooldown(ply)){
-            setTimeout(()=>{
-                detonateBomb(bombX/64,bombY/64);
-            }, DETONATION_TIME);
-            console.log(bombX, bombY);
+        //START HELPES:
+
+        const checkIfPlayerHit= (bomb,x,y)=>{
+            Object.values(players).forEach(p => {
+                const playerGridX = toMapIndex(snapToGrid(p.x, 64),64);
+                const playerGridY = toMapIndex(snapToGrid(p.y, 64),64);
+
+                console.log(x,y);
+                console.log(playerGridX, playerGridX)
+                if (playerGridX == x && playerGridY == y) {
+                    console.log("hit!")
+                }
+
+            });
+        }
+
+        const detonateBomb = (gridX, gridY, bomb) => {
+
+            const mapWidth = 10;
+            const mapHeight = 10;
+
+            let x_offset = 0;
+            let y_offset = 0;
+
+            //order of checking: bomb range, world borders, wall
+
+            //going left:
+            while (Math.abs(x_offset) <= bomb.range &&
+                gridX + x_offset >= 0 &&
+                !map[gridX + x_offset][gridY + y_offset].wall) {
+
+                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                x_offset--;
+            }
+
+
+            //going right:
+            x_offset = 0;
+            while (x_offset <= bomb.range &&
+                gridX + x_offset < mapWidth &&
+                !map[gridX + x_offset][gridY + y_offset].wall) {
+                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                x_offset++;
+            }
+
+            //going upwards:
+            x_offset = 0;
+            while (y_offset <= bomb.range &&
+                gridY + y_offset < mapHeight &&
+                !map[gridX + x_offset][gridY + y_offset].wall) {
+
+                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                y_offset++;
+            }
+
+            y_offset = 0;
+
+            //going downwards:
+            x_offset = 0;
+            while (Math.abs(y_offset) <= bomb.range &&
+                gridY + y_offset >= 0 &&
+                !map[gridX + x_offset][gridY + y_offset].wall) {
+
+                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                y_offset--;
+            }
+
+            map[gridX][gridY] = null;
+        };
+
+        const isOnCooldown = () => {
+
+            return false;
+        }
+        const getRangeFor = (ply) => {
+            return STANDARD_RANGE;
+        }
+
+
+        //END HELPERS
+
+
+        const bombX = snapToGrid(ply.x, 64);
+        const bombY = snapToGrid(ply.y, 64);
+
+        const gridX = Math.floor(bombX / 64);
+        const gridY = Math.floor(bombY / 64);
+
+        if(!isOnCooldown(ply) 
+            && map[gridX][gridY].bomb == null){
+
             const bomb =  {range: getRangeFor(ply), id:ply.id, timeout: DETONATION_TIME, x: bombX, y:bombY};
-            map[Math.floor(bombX/64)][Math.floor(bombY/64)].bomb = bomb;
+            map[gridX][gridY].bomb = bomb;
+
+            setTimeout(()=>{
+                detonateBomb(gridX,gridY, bomb);
+            }, DETONATION_TIME);
 
             io.emit("newBomb", bomb);
         }
