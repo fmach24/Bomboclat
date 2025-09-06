@@ -9,6 +9,9 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
+const DETONATION_TIME = 2.5 * 1000;
+const STANDARD_RANGE = 3;
+const BUFFED_RANGE = 4;
 // TODO: map name powninno byc ustawiane przez graczy, na razei jest hardcoded
 let mapName = "";
 const sockets = {};
@@ -18,7 +21,7 @@ const players = {};
 
 //tworzenie mapy
 const map = Array.from({ length: 10 }, () =>
-    Array.from({ length: 10 }, () => ({ bomb: false, powerup: false, wall: false }))
+    Array.from({ length: 10 }, () => ({ bomb: null, powerup: false, wall: false }))
 );
 
 for (let i = 0; i < 10; i++) {
@@ -28,6 +31,14 @@ for (let i = 0; i < 10; i++) {
     map[9][i].wall = true;
 }
 // console.log("Map:", map);
+
+function snapToGrid(value, gridSize) {
+    return Math.floor(value / gridSize) * gridSize;
+}
+
+function toMapIndex(value,gridSize){
+    return value / gridSize;
+}
 
 io.on("connection", (socket) => {
 
@@ -134,8 +145,116 @@ io.on("connection", (socket) => {
         console.log("Current sockets:", sockets);
     });
 
-    //obsluga gry
+
+
+
+
+     
+    socket.on("plantBomb", (ply)=>{
+
+        //START HELPES:
+
+        const checkIfPlayerHit= (bomb,x,y)=>{
+            Object.values(players).forEach(p => {
+                const playerGridX = toMapIndex(snapToGrid(p.x, 64),64);
+                const playerGridY = toMapIndex(snapToGrid(p.y, 64),64);
+
+                console.log(x,y);
+                console.log(playerGridX, playerGridX)
+                if (playerGridX == x && playerGridY == y) {
+                    console.log("hit!")
+                }
+
+            });
+        }
+
+        const detonateBomb = (gridX, gridY, bomb) => {
+
+            const mapWidth = 10;
+            const mapHeight = 10;
+
+            let x_offset = 0;
+            let y_offset = 0;
+
+            //order of checking: bomb range, world borders, wall
+
+            //going left:
+            while (Math.abs(x_offset) <= bomb.range &&
+                gridX + x_offset >= 0 &&
+                !map[gridX + x_offset][gridY + y_offset].wall) {
+
+                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                x_offset--;
+            }
+
+
+            //going right:
+            x_offset = 0;
+            while (x_offset <= bomb.range &&
+                gridX + x_offset < mapWidth &&
+                !map[gridX + x_offset][gridY + y_offset].wall) {
+                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                x_offset++;
+            }
+
+            //going upwards:
+            x_offset = 0;
+            while (y_offset <= bomb.range &&
+                gridY + y_offset < mapHeight &&
+                !map[gridX + x_offset][gridY + y_offset].wall) {
+
+                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                y_offset++;
+            }
+
+            y_offset = 0;
+
+            //going downwards:
+            x_offset = 0;
+            while (Math.abs(y_offset) <= bomb.range &&
+                gridY + y_offset >= 0 &&
+                !map[gridX + x_offset][gridY + y_offset].wall) {
+
+                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                y_offset--;
+            }
+
+            map[gridX][gridY] = null;
+        };
+
+        const isOnCooldown = () => {
+
+            return false;
+        }
+        const getRangeFor = (ply) => {
+            return STANDARD_RANGE;
+        }
+
+
+        //END HELPERS
+
+
+        const bombX = snapToGrid(ply.x, 64);
+        const bombY = snapToGrid(ply.y, 64);
+
+        const gridX = Math.floor(bombX / 64);
+        const gridY = Math.floor(bombY / 64);
+
+        if(!isOnCooldown(ply) 
+            && map[gridX][gridY].bomb == null){
+
+            const bomb =  {range: getRangeFor(ply), id:ply.id, timeout: DETONATION_TIME, x: bombX, y:bombY};
+            map[gridX][gridY].bomb = bomb;
+
+            setTimeout(()=>{
+                detonateBomb(gridX,gridY, bomb);
+            }, DETONATION_TIME);
+
+            io.emit("newBomb", bomb);
+        }
+    })
 });
+
 
 
 server.listen(3000, () => {
