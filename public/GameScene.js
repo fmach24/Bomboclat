@@ -2,7 +2,7 @@ export default class GameScene extends Phaser.Scene {
 
     constructor() {
         super("GameScene");
-       
+
     }
 
     preload() {
@@ -30,9 +30,9 @@ export default class GameScene extends Phaser.Scene {
             frameHeight: 32
         });
 
-        this.load.spritesheet("bomb", "assets/tmp_bomb.png",{
-            frameWidth:64,
-            frameHeight:64
+        this.load.spritesheet("bomb", "assets/tmp_bomb.png", {
+            frameWidth: 64,
+            frameHeight: 64
         });
     }
 
@@ -182,7 +182,7 @@ export default class GameScene extends Phaser.Scene {
             if (sprite && (ply.x != null) && (ply.y != null)) {
                 // console.log(players)
 
-                console.log(ply, players);
+                // console.log(ply, players);
 
                 if (ply.id == this.playerId) {
                     // Domyślna prędkość
@@ -206,16 +206,16 @@ export default class GameScene extends Phaser.Scene {
         this.socket.emit('moved', { id: this.playerId, x: this.player.x, y: this.player.y })
     }
 
-    newBomb(bomb){
+    newBomb(bomb) {
 
-        const bombSprite = this.physics.add.sprite(bomb.x + 32,bomb.y + 32,"bomb");
+        const bombSprite = this.physics.add.sprite(bomb.x + 32, bomb.y + 32, "bomb");
         this.bombGroup.add(bombSprite);
-        setTimeout(()=>{bombSprite.destroy();}, bomb.timeout);
+        setTimeout(() => { bombSprite.destroy(); }, bomb.timeout);
     }
 
 
 
-    plantBomb(){
+    plantBomb() {
         this.socket.emit('plantBomb', { id: this.playerId, x: this.player.x, y: this.player.y });
     }
 
@@ -240,7 +240,7 @@ export default class GameScene extends Phaser.Scene {
             this.sendUpdate()
         }
 
-        if(cursors.space.isDown){
+        if (cursors.space.isDown) {
             this.plantBomb();
         }
     }

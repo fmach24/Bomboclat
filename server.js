@@ -36,7 +36,7 @@ function snapToGrid(value, gridSize) {
     return Math.floor(value / gridSize) * gridSize;
 }
 
-function toMapIndex(value,gridSize){
+function toMapIndex(value, gridSize) {
     return value / gridSize;
 }
 
@@ -44,7 +44,6 @@ io.on("connection", (socket) => {
 
     let playerId = null;
 
-    // TODO: czemu wszystko jest w jednym onie?
     socket.on("registerPlayer", (data) => {
 
         // playerId = Object.keys(sockets).length + 1;
@@ -116,12 +115,13 @@ io.on("connection", (socket) => {
 
         io.emit('destroyPowerup', { x, y });
 
+        // TODO: w trakcie posiadania powerupa gdy zbierze sie kolejny tego samego typu to NIE przedluza sie czas działania, trzena zrobic time stampy
         setTimeout(() => {
             players[id].powerups[type] = false;
             console.log("Graczowi konczy sie powerup", players[id]);
             io.emit('update', players); // wyślij zaktualizowaną listę graczy do wszystkich klientów
         }, 10000); // powerup trwa 10 sekund
-        
+
     });
 
 
@@ -149,17 +149,17 @@ io.on("connection", (socket) => {
 
 
 
-     
-    socket.on("plantBomb", (ply)=>{
+
+    socket.on("plantBomb", (ply) => {
 
         //START HELPES:
 
-        const checkIfPlayerHit= (bomb,x,y)=>{
+        const checkIfPlayerHit = (bomb, x, y) => {
             Object.values(players).forEach(p => {
-                const playerGridX = toMapIndex(snapToGrid(p.x, 64),64);
-                const playerGridY = toMapIndex(snapToGrid(p.y, 64),64);
+                const playerGridX = toMapIndex(snapToGrid(p.x, 64), 64);
+                const playerGridY = toMapIndex(snapToGrid(p.y, 64), 64);
 
-                console.log(x,y);
+                console.log(x, y);
                 console.log(playerGridX, playerGridX)
                 if (playerGridX == x && playerGridY == y) {
                     console.log("hit!")
@@ -240,14 +240,14 @@ io.on("connection", (socket) => {
         const gridX = Math.floor(bombX / 64);
         const gridY = Math.floor(bombY / 64);
 
-        if(!isOnCooldown(ply) 
-            && map[gridX][gridY].bomb == null){
+        if (!isOnCooldown(ply)
+            && map[gridX][gridY].bomb == null) {
 
-            const bomb =  {range: getRangeFor(ply), id:ply.id, timeout: DETONATION_TIME, x: bombX, y:bombY};
+            const bomb = { range: getRangeFor(ply), id: ply.id, timeout: DETONATION_TIME, x: bombX, y: bombY };
             map[gridX][gridY].bomb = bomb;
 
-            setTimeout(()=>{
-                detonateBomb(gridX,gridY, bomb);
+            setTimeout(() => {
+                detonateBomb(gridX, gridY, bomb);
             }, DETONATION_TIME);
 
             io.emit("newBomb", bomb);
