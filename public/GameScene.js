@@ -185,7 +185,6 @@ export default class GameScene extends Phaser.Scene {
         Object.values(players).forEach(ply => {
 
             const sprite = this.playerGroup.getChildren().find(x => x.name == ply.id);
-<<<<<<< HEAD
             if (sprite && (ply.x != null) && (ply.y != null)) {
                 // console.log(players)
 
@@ -204,14 +203,7 @@ export default class GameScene extends Phaser.Scene {
                 else {
                     sprite.setPosition(ply.x, ply.y);
                 }
-
-=======
-            if (sprite && ply.x !== null && ply.y !== null) {
-                
-                sprite.setPosition(ply.x, ply.y)
->>>>>>> 468284d1d83581a14b69ec4a0619926ef0afac50
             }
-
         });
     }
 
