@@ -11,6 +11,8 @@ app.use(express.static("public"));
 
 let mapName = "";
 const sockets = {};
+
+//Tu info o pozycji, o hp, o powerupach.
 const players = {};
 
 //tworzenie mapy
@@ -38,7 +40,9 @@ io.on("connection", (socket) => {
         };
 
         players[playerId] = {
-            nick: data.nick
+            nick: data.nick,
+            x: null,
+            y:null
         };
 
         console.log("User connected:", socket.id);
@@ -79,6 +83,15 @@ io.on("connection", (socket) => {
             // map[x][y].powerup = false;
             io.emit('destroyPowerup', { x, y });
         });
+
+
+        socket.on('moved', (data)=>{
+            players[playerId].x = data.x
+            players[playerId].y = data.y
+
+            
+            io.emit('update', players)
+        })
     });
 
 

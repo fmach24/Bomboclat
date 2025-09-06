@@ -43,6 +43,20 @@ export default class GameScene extends Phaser.Scene {
         console.log("Players in GameScene:", players);
         console.log("My player ID:", playerId);
         console.log("My socket:", socket);
+        
+        this.buildMap();
+
+        //game network event handlers:
+
+        socket.on('spawnPowerup', this.spawnPowerup);
+
+        socket.on('destroyPowerup', this.destroyPowerup);
+
+        socket.on('update', this.updatePlayers)
+
+    }
+
+    buildMap() {
         // Tworzymy mapę
         const map = this.make.tilemap({ key: mapName + "Map" });
         const tileset = map.addTilesetImage("tiles", mapName + "Tiles");
@@ -87,32 +101,43 @@ export default class GameScene extends Phaser.Scene {
         // 📌 Warstwa obiektów: Powerups
         this.powerups = this.physics.add.group();
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
-
-        // Obsługa zdarzenia pojawienia się powerupa
-        socket.on('spawnPowerup', (data) => {
-            console.log("Received spawnPowerup event:", data);
-            const { x, y, type } = data;
-            const powerupKey = 'powerup' + type; // Zakładamy, że masz różne klucze dla różnych typów powerupów
-            const powerup = this.physics.add.sprite(x * 64 + 32, y * 64 + 32, powerupKey);
-            powerup.setData("x", x, "y", y, "type", type);
-            this.powerups.add(powerup);
-
-            //zebranie powerupa
-            this.physics.add.overlap(this.player, powerup, (player, powerup) => {
-                socket.emit('pickedPowerup', { playerId, x: powerup.getData('x'), y: powerup.getData('y'), type: powerup.getData('type') });
-                // powerup.destroy(); // usuń powerupa z mapy
-            });
-        });
-
-        socket.on('destroyPowerup', (data) => {
-            const { x, y } = data;
-            const powerup = this.powerups.getChildren().find(p => p.getData('x') === x && p.getData('y') === y);
-            if (powerup) {
-                powerup.destroy();
-            }
-        });
-
     }
+
+    //NETWORK:
+
+    //proceeds powerup spawn (received from server)
+    spawnPowerup(data) {
+        console.log("Received spawnPowerup event:", data);
+        const { x, y, type } = data;
+        const powerupKey = 'powerup' + type; // Zakładamy, że masz różne klucze dla różnych typów powerupów            const powerup = this.physics.add.sprite(x * 64 + 32, y * 64 + 32, powerupKey);
+        powerup.setData("x", x, "y", y, "type", type);
+        this.powerups.add(powerup);
+
+        //zebranie powerupa
+        this.physics.add.overlap(this.player, powerup, (player, powerup) => {
+            socket.emit('pickedPowerup', { playerId, x: powerup.getData('x'), y: powerup.getData('y'), type: powerup.getData('type') });
+            // powerup.destroy(); // usuń powerupa z mapy
+        });
+    }
+
+    //destroys powerup (data from server)
+    destroyPowerup(data) {
+        const { x, y } = data;
+        const powerup = this.powerups.getChildren().find(p => p.getData('x') === x && p.getData('y') === y);
+        if (powerup) {
+            powerup.destroy();
+        }
+    }
+
+
+    //proceeds update from the server.
+    updatePlayers(data){
+        data.players.forEach(element => {
+            
+        });
+    }
+
+    
 
     update() {
         // proste sterowanie WSAD
