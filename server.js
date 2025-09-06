@@ -9,6 +9,7 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
+// TODO: map name powninno byc ustawiane przez graczy, na razei jest hardcoded
 let mapName = "";
 const sockets = {};
 
@@ -55,7 +56,7 @@ io.on("connection", (socket) => {
 
         //gdy jest 4 graczy
         if (Object.keys(sockets).length === 2) {
-            const mapName = "beach";
+            mapName = "beach";
             
             //tmp assign some start positions.
             let i = 1;
@@ -91,9 +92,9 @@ io.on("connection", (socket) => {
         //obsługa zebrania powerupa
         socket.on('pickedPowerup', (data) => {
             //server wie jaki gracz ma powerup
-            const { playerId, x, y, type } = data;
-            console.log(`Player ${playerId} picked up powerup at (${x}, ${y}) of type ${type}`);
-            // map[x][y].powerup = false;
+            const { id, x, y, type } = data;
+            console.log(id, x, y, type);
+            map[x][y].powerup = false;
             io.emit('destroyPowerup', { x, y });
         });
 

@@ -46,17 +46,17 @@ export default class GameScene extends Phaser.Scene {
         console.log("Players in GameScene:", this.players);
         console.log("My player ID:", this.playerId);
         console.log("My socket:", this.socket);
-        
+
         this.buildMap(data);
-        
+
 
         //game network event handlers:
 
-        this.socket.on('spawnPowerup', (data)=> {this.spawnPowerup(data);});
+        this.socket.on('spawnPowerup', (data) => { this.spawnPowerup(data); });
 
-        this.socket.on('destroyPowerup', (data)=> {this.destroyPowerup(data);});
+        this.socket.on('destroyPowerup', (data) => { this.destroyPowerup(data); });
 
-        this.socket.on('update', (data)=>{ this.update(data); });
+        this.socket.on('update', (data) => { this.update(data); });
 
     }
 
@@ -142,7 +142,9 @@ export default class GameScene extends Phaser.Scene {
         const { x, y, type } = data;
         const powerupKey = 'powerup' + type; // Zakładamy, że masz różne klucze dla różnych typów powerupów            
         const powerup = this.physics.add.sprite(x * 64 + 32, y * 64 + 32, powerupKey);
-        powerup.setData("x", x, "y", y, "type", type);
+        powerup.setData("x", x);
+        powerup.setData("y", y);
+        powerup.setData("type", type);
         this.powerups.add(powerup);
 
         //zebranie powerupa
@@ -163,19 +165,19 @@ export default class GameScene extends Phaser.Scene {
 
 
     //proceeds update from the server.
-    updatePlayers(players){
-        
+    updatePlayers(players) {
+
         Object.values(players).forEach(ply => {
 
-            const sprite = this.playerGroup.children.find(x=> x.name == ply.id);
+            const sprite = this.playerGroup.children.find(x => x.name == ply.id);
             console.log(players)
             sprite.setPosition(ply.x, ply.y)
         });
     }
 
-    
-    sendUpdate(){
-        this.socket.emit('moved', {id:this.playerId, x:this.player.x, y:this.player.y})
+
+    sendUpdate() {
+        this.socket.emit('moved', { id: this.playerId, x: this.player.x, y: this.player.y })
     }
 
     update() {
@@ -196,7 +198,7 @@ export default class GameScene extends Phaser.Scene {
         } else if (cursors.down.isDown) {
             this.player.setVelocityY(speed);
         }
-        if(this.player.body.velocity.length() > 0){
+        if (this.player.body.velocity.length() > 0) {
             this.sendUpdate()
         }
     }
