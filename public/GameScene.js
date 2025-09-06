@@ -29,23 +29,41 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+
+    //start scene -> create
     create(data) {
 
         // alert(data.players);
-        const mapName = data.mapName;
-        const players = data.players;
-        const playerId = data.playerId;
-        const socket = data.socket;
+        this.mapName = data.mapName;
+        this.players = data.players;
+        this.playerId = data.playerId;
+        this.socket = data.socket;
 
+
+        console.log("Players in GameScene:", this.players);
+        console.log("My player ID:", this.playerId);
+        console.log("My socket:", this.socket);
+        
+        this.buildMap(data);
+
+        //game network event handlers:
+
+        this.socket.on('spawnPowerup', this.spawnPowerup);
+
+        this.socket.on('destroyPowerup', this.destroyPowerup);
+
+        this.socket.on('update', this.updatePlayers);
+
+    }
+
+
+
+    buildMap() {
         // this.load.tilemapTiledJSON("map", "assets/" + mapName + "Map.tmj");
         // this.load.image("tilesKey", "assets/" + mapName + "Tiles.png");
-
-        console.log("Players in GameScene:", players);
-        console.log("My player ID:", playerId);
-        console.log("My socket:", socket);
         // Tworzymy mapę
-        const map = this.make.tilemap({ key: mapName + "Map" });
-        const tileset = map.addTilesetImage("tiles", mapName + "Tiles");
+        const map = this.make.tilemap({ key: this.mapName + "Map" });
+        const tileset = map.addTilesetImage("tiles", this.mapName + "Tiles");
 
         // 2 warstwy kafelkowe
         const groundLayer = map.createLayer("groundLayer", tileset, 0, 0);
@@ -59,14 +77,30 @@ export default class GameScene extends Phaser.Scene {
         // Warstwa obiektów: Spawns
         const spawnLayer = map.getObjectLayer("spawnPoints");
 
-        // znajdź obiekt o nazwie spawn1
-        const spawnPoint = spawnLayer.objects.find(obj => obj.name === "spawn1");
+        //Osobno nasz lokalny gracz a osobno reszta otrzyjmuje polozenie.
+        let spawntag = this.players[this.playerId].spawn;
+        let spawnPoint = spawnLayer.objects.find(obj => obj.name === spawntag);
 
         if (spawnPoint) {
             // utwórz sprite gracza w pozycji spawn1
             this.player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, "player");
             this.player.setCollideWorldBounds(true);
         }
+        this.physics.add.collider(this.player, wallsLayer);
+
+
+        Object.values(this.players).forEach(ply => {
+            if (ply.id != this.playerId) {
+                spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
+                const current = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'player');
+
+                this.physics.add.collider(current, wallsLayer);
+
+                //assign proper id so we can later on find exact sprite:
+                current.name = ply.id;
+            }
+
+        });
 
         // if (powerupLayer) {
         //     powerupLayer.objects.forEach(obj => {
@@ -77,8 +111,7 @@ export default class GameScene extends Phaser.Scene {
         //     });
         // }
 
-        // Kolizja gracza ze ścianami
-        this.physics.add.collider(this.player, wallsLayer);
+
 
         // Kamera podąża za graczem
         this.cameras.main.startFollow(this.player);
@@ -88,30 +121,48 @@ export default class GameScene extends Phaser.Scene {
         this.powerups = this.physics.add.group();
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
 
-        // Obsługa zdarzenia pojawienia się powerupa
-        socket.on('spawnPowerup', (data) => {
-            console.log("Received spawnPowerup event:", data);
-            const { x, y, type } = data;
-            const powerupKey = 'powerup' + type; // Zakładamy, że masz różne klucze dla różnych typów powerupów
-            const powerup = this.physics.add.sprite(x * 64 + 32, y * 64 + 32, powerupKey);
-            powerup.setData("x", x, "y", y, "type", type);
-            this.powerups.add(powerup);
 
-            //zebranie powerupa
-            this.physics.add.overlap(this.player, powerup, (player, powerup) => {
-                socket.emit('pickedPowerup', { playerId, x: powerup.getData('x'), y: powerup.getData('y'), type: powerup.getData('type') });
-                // powerup.destroy(); // usuń powerupa z mapy
-            });
+    }
+
+    //NETWORK:
+
+    //proceeds powerup spawn (received from server)
+    spawnPowerup(data) {
+        console.log("Received spawnPowerup event:", data);
+        const { x, y, type } = data;
+        const powerupKey = 'powerup' + type; // Zakładamy, że masz różne klucze dla różnych typów powerupów            const powerup = this.physics.add.sprite(x * 64 + 32, y * 64 + 32, powerupKey);
+        powerup.setData("x", x, "y", y, "type", type);
+        this.powerups.add(powerup);
+
+        //zebranie powerupa
+        this.physics.add.overlap(this.player, powerup, (player, powerup) => {
+            socket.emit('pickedPowerup', { playerId, x: powerup.getData('x'), y: powerup.getData('y'), type: powerup.getData('type') });
+            // powerup.destroy(); // usuń powerupa z mapy
         });
+    }
 
-        socket.on('destroyPowerup', (data) => {
-            const { x, y } = data;
-            const powerup = this.powerups.getChildren().find(p => p.getData('x') === x && p.getData('y') === y);
-            if (powerup) {
-                powerup.destroy();
-            }
+    //destroys powerup (data from server)
+    destroyPowerup(data) {
+        const { x, y } = data;
+        const powerup = this.powerups.getChildren().find(p => p.getData('x') === x && p.getData('y') === y);
+        if (powerup) {
+            powerup.destroy();
+        }
+    }
+
+
+    //proceeds update from the server.
+    updatePlayers(players){
+        
+        Object.values(players).forEach(ply => {
+            const sprite = this.children.getByName(ply.id)
+            sprite.setPosition(ply.x, ply.y)
         });
+    }
 
+    
+    sendUpdate(){
+        this.socket.emit('moved', {id:this.playerId, x:this.player.x, y:this.player.y})
     }
 
     update() {
@@ -131,6 +182,9 @@ export default class GameScene extends Phaser.Scene {
             this.player.setVelocityY(-speed);
         } else if (cursors.down.isDown) {
             this.player.setVelocityY(speed);
+        }
+        if(this.player.body.velocity.length() > 0){
+            this.sendUpdate()
         }
     }
 }
