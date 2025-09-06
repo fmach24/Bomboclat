@@ -143,7 +143,7 @@ io.on("connection", (socket) => {
         return STANDARD_RANGE;
     }
 
-    const 
+     
     socket.on("plantBomb", (ply)=>{
 
         const bombX = snapToGrid(ply.x,64);
