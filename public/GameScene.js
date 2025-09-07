@@ -272,7 +272,6 @@ export default class GameScene extends Phaser.Scene {
 
     
 
-
     sendUpdate() {
         this.socket.emit('moved', { id: this.playerId, x: this.player.x, y: this.player.y })
     }
