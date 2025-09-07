@@ -1,5 +1,7 @@
 export default class GameScene extends Phaser.Scene {
 
+    HP_BAR_TAG = "hp_bar";
+
     constructor() {
         super("GameScene");
 
@@ -140,7 +142,7 @@ export default class GameScene extends Phaser.Scene {
                     strokeThickness: 4
                 }).setOrigin(0.5);
 
-                hp_bar.name = "hp_bar";
+                hp_bar.name = this.HP_BAR_TAG;
 
                 // Put sprite + text into a container
                 const player = this.add.container(spawnPoint.x, spawnPoint.y, [sprite, nickname, hp_bar]);
@@ -160,6 +162,7 @@ export default class GameScene extends Phaser.Scene {
 
                 // Assign ID for later lookup
                 player.name = ply.id;
+                player.hp_bar = hp_bar;
             }
         });
 
@@ -234,10 +237,13 @@ export default class GameScene extends Phaser.Scene {
     //proceeds update from the server.
     updatePlayers(players) {
 
+
+
         Object.values(players).forEach(ply => {
 
-            const sprite = this.playerGroup.getChildren().find(x => x.name == ply.id);
-            if (sprite && (ply.x != null) && (ply.y != null)) {
+            const playerContainer = this.playerGroup.getChildren().find(x => x.name == ply.id);
+            
+            if (playerContainer && (ply.x != null) && (ply.y != null)) {
                 // console.log(players)
 
                 // console.log(ply, players);
@@ -253,11 +259,18 @@ export default class GameScene extends Phaser.Scene {
                     }
                 }
                 else {
-                    sprite.setPosition(ply.x, ply.y);
+                    playerContainer.setPosition(ply.x, ply.y);
+
+                    playerContainer.hp_bar.setText(ply.health + " HP");
+                    console.log(ply.nick, ply.health);
                 }
             }
+
+
         });
     }
+
+    
 
 
     sendUpdate() {
