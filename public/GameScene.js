@@ -12,7 +12,7 @@ export default class GameScene extends Phaser.Scene {
         this.load.tilemapTiledJSON("beachMap", "assets/beachMap.tmj");
         this.load.image("beachTiles", "assets/beachTiles.png");
         // sprite gracza
-        this.load.spritesheet("player", "assets/1x1.png", {
+        this.load.spritesheet("player", "assets/player.png", {
             frameWidth: 64,
             frameHeight: 64
         });
@@ -31,7 +31,16 @@ export default class GameScene extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 32
         });
-
+        //breakables
+        this.load.spritesheet("breakable1x1", "assets/breakable1x1.png", {
+            frameWidth: 64,
+            frameHeight: 64
+        });
+        this.load.spritesheet("breakable2x1", "assets/breakable2x1.png", {
+            frameWidth: 128,
+            frameHeight: 64
+        });
+        // sprite bomby
         this.load.spritesheet("bomb", "assets/tmp_bomb.png", {
             frameWidth: 64,
             frameHeight: 64
@@ -154,6 +163,31 @@ export default class GameScene extends Phaser.Scene {
             }
         });
 
+
+        //spawning breakable walls
+        const breakableLayer = map.getObjectLayer("breakableSpawns");
+        const breakable1x1 = breakableLayer.objects.filter(obj => obj.type === "breakable1x1");
+        const breakable2x1 = breakableLayer.objects.filter(obj => obj.type === "breakable2x1");
+
+        this.breakablesGroup = this.physics.add.staticGroup();
+
+        for (let obj of breakable1x1) {
+            const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable1x1");
+            wall.setData("hp", null); // przykładowe HP
+            wall.setData("x", obj.x);
+            wall.setData("y", obj.y);
+            this.breakablesGroup.add(wall);
+        }
+        
+        for (let obj of breakable2x1) {
+            const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable2x1");
+            wall.setData("hp", null); // przykładowe HP
+            wall.setData("x", obj.x);
+            wall.setData("y", obj.y);
+            this.breakablesGroup.add(wall);
+        }
+
+        this.physics.add.collider(this.player, this.breakablesGroup);
 
         // if (powerupLayer) {
         //     powerupLayer.objects.forEach(obj => {
