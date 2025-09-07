@@ -6,9 +6,13 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        // mapa i tileset
+        //mapy
         this.load.tilemapTiledJSON("beachMap", "assets/beachMap.tmj");
         this.load.image("beachTiles", "assets/beachTiles.png");
+
+        this.load.tilemapTiledJSON("forestMap", "assets/forestMap.tmj");
+        this.load.image("forestTiles", "assets/forestTiles.png");
+
         // sprite gracza
         this.load.spritesheet("player", "assets/player.png", {
             frameWidth: 64,
@@ -60,9 +64,9 @@ export default class GameScene extends Phaser.Scene {
         console.log("Players in GameScene:", this.players);
         console.log("My player ID:", this.playerId);
         console.log("My socket:", this.socket);
+        console.log("Loading map:", this.mapName);
 
         this.buildMap(data);
-
 
         //game network event handlers:
 
@@ -73,7 +77,6 @@ export default class GameScene extends Phaser.Scene {
         this.socket.on('update', (data) => { this.updatePlayers(data); });
 
         this.socket.on('newBomb', (data) => { this.newBomb(data); });
-
     }
 
 
@@ -161,41 +164,30 @@ export default class GameScene extends Phaser.Scene {
         });
 
 
-        //spawning breakable walls
-        const breakableLayer = map.getObjectLayer("breakableSpawns");
-        const breakable1x1 = breakableLayer.objects.filter(obj => obj.type === "breakable1x1");
-        const breakable2x1 = breakableLayer.objects.filter(obj => obj.type === "breakable2x1");
+        // //spawning breakable walls
+        // const breakableLayer = map.getObjectLayer("breakableSpawns");
+        // const breakable1x1 = breakableLayer.objects.filter(obj => obj.type === "breakable1x1");
+        // const breakable2x1 = breakableLayer.objects.filter(obj => obj.type === "breakable2x1");
 
-        this.breakablesGroup = this.physics.add.staticGroup();
+        // this.breakablesGroup = this.physics.add.staticGroup();
 
-        for (let obj of breakable1x1) {
-            const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable1x1");
-            wall.setData("hp", null); // przykładowe HP
-            wall.setData("x", obj.x);
-            wall.setData("y", obj.y);
-            this.breakablesGroup.add(wall);
-        }
-        
-        for (let obj of breakable2x1) {
-            const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable2x1");
-            wall.setData("hp", null); // przykładowe HP
-            wall.setData("x", obj.x);
-            wall.setData("y", obj.y);
-            this.breakablesGroup.add(wall);
-        }
-
-        this.physics.add.collider(this.player, this.breakablesGroup);
-
-        // if (powerupLayer) {
-        //     powerupLayer.objects.forEach(obj => {
-        //         if (obj.name.startsWith("powerup")) {
-        //             const pu = this.physics.add.sprite(obj.x, obj.y, "powerup");
-        //             pu.setData("kind", obj.type || "default");
-        //         }
-        //     });
+        // for (let obj of breakable1x1) {
+        //     const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable1x1");
+        //     wall.setData("hp", null); // przykładowe HP
+        //     wall.setData("x", obj.x);
+        //     wall.setData("y", obj.y);
+        //     this.breakablesGroup.add(wall);
         // }
 
+        // for (let obj of breakable2x1) {
+        //     const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable2x1");
+        //     wall.setData("hp", null); // przykładowe HP
+        //     wall.setData("x", obj.x);
+        //     wall.setData("y", obj.y);
+        //     this.breakablesGroup.add(wall);
+        // }
 
+        // this.physics.add.collider(this.player, this.breakablesGroup);
 
         // Kamera podąża za graczem
         this.cameras.main.startFollow(this.player);
@@ -286,22 +278,57 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update() {
-        // proste sterowanie WSAD
+        // Sterowanie z historią wciśniętych klawiszy
         const cursors = this.input.keyboard.createCursorKeys();
+
+        // Inicjalizuj stos klawiszy jeśli nie istnieje
+        if (!this.keyStack) {
+            this.keyStack = [];
+        }
+
+        // Dodaj nowo wciśnięte klawisze na górę stosu
+        if (Phaser.Input.Keyboard.JustDown(cursors.left) && !this.keyStack.includes('left')) {
+            this.keyStack.push('left');
+        }
+        if (Phaser.Input.Keyboard.JustDown(cursors.right) && !this.keyStack.includes('right')) {
+            this.keyStack.push('right');
+        }
+        if (Phaser.Input.Keyboard.JustDown(cursors.up) && !this.keyStack.includes('up')) {
+            this.keyStack.push('up');
+        }
+        if (Phaser.Input.Keyboard.JustDown(cursors.down) && !this.keyStack.includes('down')) {
+            this.keyStack.push('down');
+        }
+
+        // Usuń puszczone klawisze ze stosu
+        if (!cursors.left.isDown) {
+            this.keyStack = this.keyStack.filter(key => key !== 'left');
+        }
+        if (!cursors.right.isDown) {
+            this.keyStack = this.keyStack.filter(key => key !== 'right');
+        }
+        if (!cursors.up.isDown) {
+            this.keyStack = this.keyStack.filter(key => key !== 'up');
+        }
+        if (!cursors.down.isDown) {
+            this.keyStack = this.keyStack.filter(key => key !== 'down');
+        }
 
         this.player.setVelocity(0);
 
-        if (cursors.left.isDown) {
+        // Użyj ostatniego klawisza ze stosu (najnowszy wciśnięty)
+        const currentKey = this.keyStack[this.keyStack.length - 1];
+        
+        if (currentKey === 'left') {
             this.player.setVelocityX(-this.speed);
-        } else if (cursors.right.isDown) {
+        } else if (currentKey === 'right') {
             this.player.setVelocityX(this.speed);
-        }
-
-        if (cursors.up.isDown) {
+        } else if (currentKey === 'up') {
             this.player.setVelocityY(-this.speed);
-        } else if (cursors.down.isDown) {
+        } else if (currentKey === 'down') {
             this.player.setVelocityY(this.speed);
         }
+
         if (this.player.body.velocity.length() > 0) {
             this.sendUpdate()
         }
