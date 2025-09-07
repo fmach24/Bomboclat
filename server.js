@@ -15,8 +15,12 @@ const DETONATION_TIME = 2.5 * 1000;
 const STANDARD_RANGE = 3;
 const BUFFED_RANGE = 4;
 const HP_MAX = 3;
-// TODO: map name powninno byc ustawiane przez graczy, na razei jest hardcoded
 let MAP_NAME = "";
+
+let mapHeight = 0;
+let mapWidth = 0;
+let map = null;
+
 const sockets = {};
 const mapPreferences = {}; // Preferencje map od graczy
 
@@ -25,26 +29,28 @@ const players = {};
 
 
 
-const mapHeight = 10;
-const mapWidth = 10;
 
 
 
 
-//tworzenie mapy
-const map = Array.from({ length: mapHeight }, () =>
-    Array.from({ length: mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
-);
+// //tworzenie mapy
+// const map = Array.from({ length: mapHeight }, () =>
+//     Array.from({ length: mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
+// );
 
-for (let i = 0; i < mapHeight; i++) {
-    map[i][0].wall = true;
-    map[i][mapWidth - 1].wall = true;
-}
-for (let i = 0; i < mapWidth; i++) {
-    map[0][i].wall = true;
-    map[mapHeight - 1][i].wall = true;
-}
-// console.log("Map:", map);
+// for (let i = 0; i < mapHeight; i++) {
+//     map[i][0].wall = true;
+//     map[i][mapWidth - 1].wall = true;
+// }
+// for (let i = 0; i < mapWidth; i++) {
+//     map[0][i].wall = true;
+//     map[mapHeight - 1][i].wall = true;
+// }
+// // console.log("Map:", map);
+
+
+
+
 
 function snapToGrid(value, gridSize) {
     return Math.floor(value / gridSize) * gridSize;
@@ -111,28 +117,33 @@ io.on("connection", (socket) => {
         }
     });
 
-    //TODO: zaczyna leciec timer od razu po wlaczeniu serwera chyba
-    //obsluga powerupow
-    setInterval(() => {
-        // Sprawdź czy gra jest aktywna (są gracze)
-        if (Object.keys(players).length < REQUIRED_PLAYERS) return;
+    socket.on('mapCreated', (data) => {
+        mapHeight = data.mapArray.length;
+        mapWidth = data.mapArray[0].length;
+        map = data.mapArray;
+        
+        //obsluga powerupow
+        setInterval(() => {
+            // czy są gracze (wsm nie potrzebne chyba)
+            if (Object.keys(players).length < REQUIRED_PLAYERS) return;
 
-        // Wybierz losowe współrzędne na podstawie rzeczywistych wymiarów
-        const x = Math.floor(Math.random() * mapWidth);
-        const y = Math.floor(Math.random() * mapHeight);
+            // Wybierz losowe współrzędne na podstawie rzeczywistych wymiarów
+            const x = Math.floor(Math.random() * mapWidth);
+            const y = Math.floor(Math.random() * mapHeight);
 
-        const type = Math.floor(Math.random() * 3);
+            const type = Math.floor(Math.random() * 3);
 
-        if (!map[x][y].wall && !map[x][y].bomb && !map[x][y].powerup) {
-            map[x][y].powerup = true;
-            io.emit('spawnPowerup', { x, y, type: type });
-        } else {
-            console.log("zajete miejsce");
-        }
+            if (!map[y][x].wall && !map[y][x].bomb && !map[y][x].powerup) {
+                map[y][x].powerup = true;
+                io.emit('spawnPowerup', { x, y, type: type });
+            } else {
+                console.log("zajete miejsce");
+            }
 
-        console.log("POWERUP:", x, y);
-        console.log("TYPE:", type);
-    }, 10000); // co 0.2 sekund
+            console.log("POWERUP:", x, y);
+            console.log("TYPE:", type);
+        }, 10000); // co 10 sekund
+    });
 
     //TODO: dokonczyc obsluge powerupow
     //obsługa zebrania powerupa

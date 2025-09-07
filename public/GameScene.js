@@ -94,12 +94,34 @@ export default class GameScene extends Phaser.Scene {
         const groundLayer = map.createLayer("groundLayer", tileset, 0, 0);
         const wallsLayer = map.createLayer("wallsLayer", tileset, 0, 0);
 
+        //tworzenie mapArray ktory zostanie wyslany do servera
+        const mapHeight = map.height;
+        console.log("Map height in tiles:", mapHeight);
+        const mapWidth = map.width;
+        //tworzenie mapy
+        const mapArray = Array.from({ length: mapHeight }, () =>
+            Array.from({ length: mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
+        );
+
+        // Sprawdź każdy kafelek w wallsLayer i ustaw wall = true jeśli kafelek istnieje
+        for (let y = 0; y < mapHeight; y++) {
+            for (let x = 0; x < mapWidth; x++) {
+                const tile = wallsLayer.getTileAt(x, y);
+                if (tile !== null) {
+                    mapArray[y][x].wall = true;
+                }
+            }
+        }
+        console.log("Map:", mapArray);
+
         // Kolizje dla ścian
         // wallsLayer.setCollisionByProperty({ collides: true });
 
+
+
+
+        //kolizje scian
         wallsLayer.setCollisionByExclusion([-1]);
-
-
 
         // Warstwa obiektów: Spawns
         const spawnLayer = map.getObjectLayer("spawnPoints");
@@ -118,7 +140,6 @@ export default class GameScene extends Phaser.Scene {
             this.player.name = this.playerId; // assign proper id so we can later on find exact sprite:
         }
         this.physics.add.collider(this.player, wallsLayer);
-
 
         Object.values(this.players).forEach(ply => {
             if (ply.id !== this.playerId) {
@@ -166,8 +187,8 @@ export default class GameScene extends Phaser.Scene {
             }
         });
 
-
-        // //spawning breakable walls
+        // aktualnie nieużywane
+        // spawning breakable walls
         // const breakableLayer = map.getObjectLayer("breakableSpawns");
         // const breakable1x1 = breakableLayer.objects.filter(obj => obj.type === "breakable1x1");
         // const breakable2x1 = breakableLayer.objects.filter(obj => obj.type === "breakable2x1");
@@ -202,6 +223,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.bombGroup = this.physics.add.group();
 
+        this.socket.emit('mapCreated', { mapArray: mapArray });
     }
 
     //NETWORK:
@@ -242,7 +264,7 @@ export default class GameScene extends Phaser.Scene {
         Object.values(players).forEach(ply => {
 
             const playerContainer = this.playerGroup.getChildren().find(x => x.name == ply.id);
-            
+
             if (playerContainer && (ply.x != null) && (ply.y != null)) {
                 // console.log(players)
 
@@ -270,7 +292,7 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
-    
+
 
     sendUpdate() {
         this.socket.emit('moved', { id: this.playerId, x: this.player.x, y: this.player.y })
@@ -330,7 +352,7 @@ export default class GameScene extends Phaser.Scene {
 
         // Użyj ostatniego klawisza ze stosu (najnowszy wciśnięty)
         const currentKey = this.keyStack[this.keyStack.length - 1];
-        
+
         if (currentKey === 'left') {
             this.player.setVelocityX(-this.speed);
         } else if (currentKey === 'right') {

@@ -3,6 +3,7 @@ import GameScene from "./GameScene.js";
 
 const config = {
   type: Phaser.AUTO,
+  //TODO: rozdzialka jest hardcoded, trzeba zmienic
   width: 640,
   height: 640,
   parent: "game-container", // <-- to jest kluczowe!
