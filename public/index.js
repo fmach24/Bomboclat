@@ -9,7 +9,7 @@ const config = {
   dom: { createContainer: true }, // <-- DODAJ TO!
   physics: {
     default: "arcade",
-    arcade: { debug: true }
+    arcade: { debug: false }
   },
   // scene: {
   //   preload,

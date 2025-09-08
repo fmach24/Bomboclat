@@ -10,7 +10,7 @@ const io = new Server(server);
 app.use(express.static("public"));
 
 //na razie const ilosc rgaczy do odpalenia gry
-const REQUIRED_PLAYERS = 2;
+const REQUIRED_PLAYERS = 3;
 const DETONATION_TIME = 2.5 * 1000;
 const STANDARD_RANGE = 3;
 const BUFFED_RANGE = 4;
@@ -85,7 +85,8 @@ io.on("connection", (socket) => {
             health: HP_MAX,
             x: null,
             y: null,
-            powerups: [false, false, false] // przykładowe powerupy
+            powerups: [false, false, false], // przykładowe powerupy
+            currentDirection: "right" // nowa właściwość do przechowywania kierunku ruchu
         };
 
         // Zapisz preferencję mapy
@@ -201,6 +202,7 @@ io.on("connection", (socket) => {
             return;
         players[data.id].x = data.x
         players[data.id].y = data.y
+        players[data.id].currentDirection = data.direction; // aktualizuj kierunek ruchu
 
 
         io.emit('update', players)
@@ -253,8 +255,7 @@ io.on("connection", (socket) => {
 
         const detonateBomb = (gridX, gridY, bomb) => {
             // TODO: TUTAJ jest hardcoded xy mapy, teraz jest zdefiniowane wyzej przy tworzeniu mapy, ale nie zmieniam tu bo nw czy sie nie rozjebie cos
-            const mapWidth = 10;
-            const mapHeight = 10;
+
 
             let x_offset, y_offset;
 
