@@ -1,0 +1,51 @@
+body {
+  display: flex;
+  justify-content: center; /* horizontal */
+  align-items: center;     /* vertical */
+  height: 100vh;           /* full height of viewport */
+  margin: 0;
+  background-color: black;
+  font-family: "Jersey 10", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  color: #fff;
+  font-size: 32px;
+  border-top: 1px solid white;
+}
+
+ul{
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+li{
+    display: flex;
+    align-items: center;
+}
+.powerup-preview-side-menu{
+    font-size: 20px;
+    color: whitesmoke;
+    padding-bottom: 30px;
+
+}
+
+.powerup-preview-side-menu > ul > li >span{
+    padding-left: 5px;
+    
+}
+
+.jersey-10-regular {
+  font-family: "Jersey 10", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}

@@ -7,10 +7,34 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
   <script type="module" src="index.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
 </head>
 
 <body>
-  <div id="game-container" ></div>
+  <div class="container">
+
+    <div id="game-container" ></div>
+    <div class="powerup-preview-side-menu">
+      <span style="font-size: 30px; margin-bottom: 10px;">
+        Powerups:
+      </span>
+      <ul>
+        <li><img src="assets/animations/speed1.png"/> <span>Super speed </span></li>
+        <li><img src="assets/animations/mikstura1.png"/><span>Super slow (beer-based magic potion)</span></li>
+        <li><img src="assets/animations/szczups1.png"/><span style="padding-left: 5px;">More frequent bombs (sczczupak's blessing)</span></li>
+      </ul>
+    </div>
+
+  </div>
+      <footer>
+    &copy; 2025 Bomboclat studios. All rights reserved.
+    </footer>
+
 </body>
 
 </html>
