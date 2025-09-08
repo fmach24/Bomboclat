@@ -21,6 +21,7 @@ let mapHeight = 0;
 let mapWidth = 0;
 let map = null;
 let mapCreatedCount = 0; // Licznik graczy którzy wysłali mapCreated
+let powerupTimer = null; // Referencja do timera powerupów
 
 //to nie jest na razie uzyteczne ale jakbysmy chcieli zablokowac pojawianie sie powerupoow to zostawiam
 // let powerupTimerStarted = false; // Flaga czy timer powerupów już został uruchomiony
@@ -33,7 +34,7 @@ const players = {};
 
 
 
-
+//!!!!!!!!!!! TODO: nie przydziela na podczatku graczowi xy, wiec bomba nie wybucha na nim, dopiero gdy sie ruszy
 
 
 // //tworzenie mapy (przenienione do GameScene.js)
@@ -95,7 +96,7 @@ io.on("connection", (socket) => {
         console.log("User connected:", socket.id);
         console.log("Current sockets:", sockets);
         console.log("Map preferences:", mapPreferences);
-//TODO: gdy gra sie zacznie i osobna wyjdzie z gry i dolaczy znowu, to zacznie nowa gre wtedy, moze zrobic tak, że sockets beda usuwane po rozpoczaciu gry?
+        //TODO: gdy gra sie zacznie i osobna wyjdzie z gry i dolaczy znowu, to zacznie nowa gre wtedy, moze zrobic tak, że sockets beda usuwane po rozpoczaciu gry?
         //gdy jest 4 graczy
         if (Object.keys(sockets).length === REQUIRED_PLAYERS) {
             // Losuj mapę z preferencji graczy
@@ -122,23 +123,28 @@ io.on("connection", (socket) => {
 
     //na razie to jest tak że od kazdego gracza server dostaje mapCrated
     socket.on('mapCreated', (data) => {
-        mapHeight = data.mapArray.length;
-        mapWidth = data.mapArray[0].length;
-        map = data.mapArray;
-
         mapCreatedCount++; // Zwiększ licznik
         console.log(`mapCreated otrzymane od gracza ${mapCreatedCount}/${REQUIRED_PLAYERS}`);
-
         // Uruchom timer powerupów dopiero gdy wszyscy gracze wyślą mapCreated
         if (mapCreatedCount === REQUIRED_PLAYERS) {// && !powerupTimerStarted) {
             // powerupTimerStarted = true;
-            console.log("Wszyscy gracze wysłali mapCreated - uruchamiam timer powerupów");
             
-            //obsluga powerupow
-            setInterval(() => {
+            console.log("Wszyscy gracze wysłali mapCreated - uruchamiam timer powerupów");
 
-                // gdy nie ma graczy nie spawnuj powerupow
-                if (Object.keys(players).length === 0) return;
+            mapHeight = data.mapArray.length;
+            mapWidth = data.mapArray[0].length;
+            map = data.mapArray;
+
+            //obsluga powerupow
+            powerupTimer = setInterval(() => {
+
+                // gdy nie ma graczy zatrzymaj timer
+                if (Object.keys(players).length === 0) {
+                    console.log("Brak graczy - zatrzymuję timer powerupów");
+                    clearInterval(powerupTimer);
+                    powerupTimer = null;
+                    return;
+                }
 
                 // Wybierz losowe współrzędne na podstawie rzeczywistych wymiarów
 
@@ -207,7 +213,14 @@ io.on("connection", (socket) => {
         delete sockets[socket.id];
         delete players[playerId];
         delete mapPreferences[playerId];
-        mapCreatedCount = 0; // Zmniejsz licznik
+        mapCreatedCount = 0; // Zresetuj licznik
+
+        // Jeśli nie ma już graczy, zatrzymaj timer powerupów
+        if (Object.keys(players).length === 0 && powerupTimer) {
+            console.log("Ostatni gracz się rozłączył - zatrzymuję timer powerupów");
+            clearInterval(powerupTimer);
+            powerupTimer = null;
+        }
 
         console.log("User disconnected:", socket.id);
         console.log("Current sockets:", sockets);
@@ -231,7 +244,7 @@ io.on("connection", (socket) => {
 
                     //TODO: probably wanna have some animation for damage
                     p.health--;
-//TODO: mechanika co jesli gracz ma 0hp
+                    //TODO: mechanika co jesli gracz ma 0hp
                     io.emit('update', players);
                 }
 

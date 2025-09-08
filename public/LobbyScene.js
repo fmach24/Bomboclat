@@ -42,20 +42,20 @@ export default class LobbyScene extends Phaser.Scene {
         this.startButton.on('click', () => {
             const nick = this.inputNick.node.value.trim() || 'Gracz';
             const preferredMap = this.mapSelector.node.value;
-            
+
             // Zablokuj input i przycisk
             this.inputNick.node.disabled = true;
             this.mapSelector.node.disabled = true;
             this.startButton.node.disabled = true;
             this.startButton.node.style.opacity = '0.5';
-            
+
             socket.emit("registerPlayer", { nick, preferredMap });
         });
 
         socket.on("startGame", (sockets, players, mapName) => {
 
             const playerId = sockets[socket.id].id;
-            
+
             this.scene.start('GameScene', { players: players, playerId: playerId, socket: socket, mapName: mapName });
         });
 

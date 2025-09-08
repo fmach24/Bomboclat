@@ -20,35 +20,38 @@ export default class GameScene extends Phaser.Scene {
             frameWidth: 64,
             frameHeight: 64
         });
-        // sprite powerup0
-        this.load.spritesheet("powerup0", "assets/1x1.png", {
-            frameWidth: 32,
-            frameHeight: 32
-        });
-        // sprite powerup1
-        this.load.spritesheet("powerup1", "assets/1x1.png", {
-            frameWidth: 32,
-            frameHeight: 32
-        });
-        // sprite powerup2
-        this.load.spritesheet("powerup2", "assets/1x1.png", {
-            frameWidth: 32,
-            frameHeight: 32
-        });
+
+        // Animacje powerupów - ładowanie klatek
+        // Speed powerup (powerup0) - 12 klatek
+        for (let i = 1; i <= 12; i++) {
+            this.load.image(`speed${i}`, `assets/animations/speed${i}.png`);
+        }
+
+        // Mikstura powerup (powerup1) - 15 klatek
+        for (let i = 1; i <= 15; i++) {
+            this.load.image(`mikstura${i}`, `assets/animations/mikstura${i}.png`);
+        }
+
+        // Szczupas powerup (powerup2) - 15 klatek
+        for (let i = 1; i <= 15; i++) {
+            this.load.image(`szczups${i}`, `assets/animations/szczups${i}.png`);
+        }
+
+        // Bomba animacja - 12 klatek  
+        for (let i = 1; i <= 12; i++) {
+            this.load.image(`bomba${i}`, `assets/animations/bomba${i}.png`);
+        }
+
         //breakables
-        this.load.spritesheet("breakable1x1", "assets/breakable1x1.png", {
-            frameWidth: 64,
-            frameHeight: 64
-        });
-        this.load.spritesheet("breakable2x1", "assets/breakable2x1.png", {
-            frameWidth: 128,
-            frameHeight: 64
-        });
-        // sprite bomby
-        this.load.spritesheet("bomb", "assets/tmp_bomb.png", {
-            frameWidth: 64,
-            frameHeight: 64
-        });
+        // this.load.spritesheet("breakable1x1", "assets/breakable1x1.png", {
+        //     frameWidth: 64,
+        //     frameHeight: 64
+        // });
+        // this.load.spritesheet("breakable2x1", "assets/breakable2x1.png", {
+        //     frameWidth: 128,
+        //     frameHeight: 64
+        // });
+        // sprite bomby - usunięte, używamy animacji
     }
 
 
@@ -80,6 +83,59 @@ export default class GameScene extends Phaser.Scene {
         this.socket.on('update', (data) => { this.updatePlayers(data); });
 
         this.socket.on('newBomb', (data) => { this.newBomb(data); });
+
+        // Tworzenie animacji powerupów
+        this.createPowerupAnimations();
+    }
+
+    createPowerupAnimations() {
+        // Animacja speed (powerup0) - 12 klatek
+        const speedFrames = [];
+        for (let i = 1; i <= 12; i++) {
+            speedFrames.push({ key: `speed${i}` });
+        }
+        this.anims.create({
+            key: 'speed-animation',
+            frames: speedFrames,
+            frameRate: 20,
+            repeat: -1 // zapętlenie w nieskończoność
+        });
+
+        // Animacja mikstura (powerup1) - 15 klatek
+        const miksturaFrames = [];
+        for (let i = 1; i <= 15; i++) {
+            miksturaFrames.push({ key: `mikstura${i}` });
+        }
+        this.anims.create({
+            key: 'mikstura-animation',
+            frames: miksturaFrames,
+            frameRate: 20,
+            repeat: -1 // zapętlenie w nieskończoność
+        });
+
+        // Animacja szczupas (powerup2) - 15 klatek
+        const szczupsFrames = [];
+        for (let i = 1; i <= 15; i++) {
+            szczupsFrames.push({ key: `szczups${i}` });
+        }
+        this.anims.create({
+            key: 'szczupas-animation',
+            frames: szczupsFrames,
+            frameRate: 20,
+            repeat: -1 // zapętlenie w nieskończoność
+        });
+
+        // Animacja bomby - 12 klatek
+        const bombaFrames = [];
+        for (let i = 1; i <= 12; i++) {
+            bombaFrames.push({ key: `bomba${i}` });
+        }
+        this.anims.create({
+            key: 'bomba-animation',
+            frames: bombaFrames,
+            frameRate: 20,
+            repeat: -1 // zapętlenie w nieskończoność
+        });
     }
 
 
@@ -122,7 +178,7 @@ export default class GameScene extends Phaser.Scene {
 
 
         //kolizje scian
-        wallsLayer.setCollisionByExclusion([-1]);
+        wallsLayer.setCollisionByExclusion([-1]);       
 
         // Warstwa obiektów: Spawns
         const spawnLayer = map.getObjectLayer("spawnPoints");
@@ -135,15 +191,54 @@ export default class GameScene extends Phaser.Scene {
 
         if (spawnPoint) {
             // utwórz sprite gracza w pozycji spawn1
-            this.player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, "player");
-            this.player.setCollideWorldBounds(true);
-            this.playerGroup.add(this.player)
-            this.player.name = this.playerId; // assign proper id so we can later on find exact sprite:
+            const sprite = this.add.sprite(0, 0, 'player');
+
+            const nickname = this.add.text(0, -56, this.players[this.playerId].nick || "NICK", {
+                fontSize: "16px",
+                color: "#fff",
+                stroke: "#000",
+                strokeThickness: 3
+            }).setOrigin(0.5);
+
+
+            const hp_bar = this.add.text(0, -40, this.players[this.playerId].health + " HP", {
+                fontSize: "16px",
+                color: "#47c070ff",
+                stroke: "#000",
+                strokeThickness: 4
+            }).setOrigin(0.5);
+
+            hp_bar.name = this.HP_BAR_TAG;
+
+            // Put sprite + text into a container
+            this.player = this.add.container(spawnPoint.x, spawnPoint.y, [sprite, nickname, hp_bar]);
+
+            // Enable physics on the container
+            this.physics.world.enable(this.player);
+
+            // Adjust body size to match sprite
+            this.player.body.setSize(sprite.width, sprite.height);
+            this.player.body.setOffset(-sprite.width / 2, -sprite.height / 2);
+
+            // Add collisions
+            this.physics.add.collider(this.player, wallsLayer);
+
+            // Add to player group
+            this.playerGroup.add(this.player);
+
+            // Assign ID for later lookup
+            this.player.name = this.playerId;
+            this.player.hp_bar = hp_bar;
+
+            // this.player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, "player");
+            // // this.player.setCollideWorldBounds(true);
+            // this.playerGroup.add(this.player)
+            // this.player.name = this.playerId; // assign proper id so we can later on find exact sprite:
         }
-        this.physics.add.collider(this.player, wallsLayer);
+        // this.physics.add.collider(this.player, wallsLayer);
 
         Object.values(this.players).forEach(ply => {
-            if (ply.id !== this.playerId) {
+            if (ply.id !== this.playerId) { //dla reszty graczy
                 const spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
 
                 // Create main sprite
@@ -157,7 +252,7 @@ export default class GameScene extends Phaser.Scene {
                     strokeThickness: 3
                 }).setOrigin(0.5);
 
-                const hp_bar = this.add.text(0, -40, "100%", {
+                const hp_bar = this.add.text(0, -40, ply.health + " HP", {
                     fontSize: "16px",
                     color: "#47c070ff",
                     stroke: "#000",
@@ -233,12 +328,38 @@ export default class GameScene extends Phaser.Scene {
     spawnPowerup(data) {
         console.log("Received spawnPowerup event:", data);
         const { x, y, type } = data;
-        const powerupKey = 'powerup' + type; // Zakładamy, że masz różne klucze dla różnych typów powerupów            
-        const powerup = this.physics.add.sprite(x * 64 + 32, y * 64 + 32, powerupKey);
+
+        // Mapowanie typów powerupów na animacje
+        const animationKeys = {
+            0: 'speed-animation',
+            1: 'mikstura-animation',
+            2: 'szczupas-animation'
+        };
+
+        // Mapowanie typów na pierwszy frame (do wyświetlenia przed animacją)
+        const firstFrameKeys = {
+            0: 'speed1',
+            1: 'mikstura1',
+            2: 'szczups1'
+        };
+
+        const animationKey = animationKeys[type];
+        const firstFrameKey = firstFrameKeys[type];
+
+        if (!animationKey || !firstFrameKey) {
+            console.error("Nieznany typ powerupa:", type);
+            return;
+        }
+
+        // Stwórz sprite z pierwszą klatką
+        const powerup = this.physics.add.sprite(x * 64 + 32, y * 64 + 32, firstFrameKey);
         powerup.setData("x", x);
         powerup.setData("y", y);
         powerup.setData("type", type);
         this.powerups.add(powerup);
+
+        // Odtwórz animację
+        powerup.play(animationKey);
 
         //zebranie powerupa
         this.physics.add.overlap(this.player, powerup, (player, powerup) => {
@@ -252,6 +373,8 @@ export default class GameScene extends Phaser.Scene {
         const { x, y } = data;
         const powerup = this.powerups.getChildren().find(p => p.getData('x') === x && p.getData('y') === y);
         if (powerup) {
+            // Zatrzymaj animację przed usunięciem
+            powerup.stop();
             powerup.destroy();
         }
     }
@@ -274,6 +397,10 @@ export default class GameScene extends Phaser.Scene {
 
                 //jesli to jest nasz gracz
                 if (ply.id == this.playerId) {
+                    //TODO: to gowno
+                    this.player.hp_bar.setText(ply.health + " HP");
+                    console.log(ply.nick, ply.health);
+
                     // Domyślna prędkość
                     // this.speed = 300;
                     if (ply.powerups[0]) {
@@ -281,21 +408,23 @@ export default class GameScene extends Phaser.Scene {
                     }
                     else {
                         this.speed = 150; // Brak powerupu SPEED
-                    }                   
+                    }
                     //gracz ma 0hp
-                    if (ply.health <= 0 && !this.isDead) {
+                    if (ply.health <= 0) {
                         this.isDead = true; // Ustaw flagę że gracz umarł
                         this.showDeathOverlay();
                         // this.player.setTint(0xff0000); // na czerwono
-                        this.player.disableBody(true, true); // usuń gracza z gry
+                        playerContainer.setVisible(false);
+                        playerContainer.setActive(false); // usuń gracza z gry
                         // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
                     }
                 }
                 else {
-                    playerContainer.setPosition(ply.x, ply.y);
 
+                    playerContainer.setPosition(ply.x, ply.y);
                     playerContainer.hp_bar.setText(ply.health + " HP");
                     console.log(ply.nick, ply.health);
+
                     //gracz ma 0hp
                     if (ply.health <= 0) {
                         // this.player.setTint(0xff0000); // na czerwono
@@ -317,10 +446,18 @@ export default class GameScene extends Phaser.Scene {
     }
 
     newBomb(bomb) {
-
-        const bombSprite = this.physics.add.sprite(bomb.x + 32, bomb.y + 32, "bomb");
+        // Stwórz sprite bomby z pierwszą klatką animacji
+        const bombSprite = this.physics.add.sprite(bomb.x + 32, bomb.y + 32, "bomba1");
         this.bombGroup.add(bombSprite);
-        setTimeout(() => { bombSprite.destroy(); }, bomb.timeout);
+        
+        // Odtwórz animację bomby
+        bombSprite.play('bomba-animation');
+        
+        setTimeout(() => { 
+            // Zatrzymaj animację przed usunięciem
+            bombSprite.stop();
+            bombSprite.destroy(); 
+        }, bomb.timeout);
     }
 
 
@@ -330,6 +467,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update() {
+        // Jeśli gracz nie żyje, nie pozwól mu się ruszać
+        if (this.isDead) return;
+        
         // Sterowanie z historią wciśniętych klawiszy
         const cursors = this.input.keyboard.createCursorKeys();
 
@@ -366,19 +506,22 @@ export default class GameScene extends Phaser.Scene {
             this.keyStack = this.keyStack.filter(key => key !== 'down');
         }
 
-        this.player.setVelocity(0);
+        // Sprawdź czy kontener ma body przed użyciem
+        if (!this.player.body) return;
+
+        this.player.body.setVelocity(0, 0);
 
         // Użyj ostatniego klawisza ze stosu (najnowszy wciśnięty)
         const currentKey = this.keyStack[this.keyStack.length - 1];
 
         if (currentKey === 'left') {
-            this.player.setVelocityX(-this.speed);
+            this.player.body.setVelocityX(-this.speed);
         } else if (currentKey === 'right') {
-            this.player.setVelocityX(this.speed);
+            this.player.body.setVelocityX(this.speed);
         } else if (currentKey === 'up') {
-            this.player.setVelocityY(-this.speed);
+            this.player.body.setVelocityY(-this.speed);
         } else if (currentKey === 'down') {
-            this.player.setVelocityY(this.speed);
+            this.player.body.setVelocityY(this.speed);
         }
 
         if (this.player.body.velocity.length() > 0) {
@@ -396,11 +539,11 @@ export default class GameScene extends Phaser.Scene {
 
         // Szary filtr na całym ekranie
         this.deathOverlay = this.add.rectangle(
-            this.cameras.main.centerX, 
-            this.cameras.main.centerY, 
-            this.cameras.main.width, 
-            this.cameras.main.height, 
-            0x000000, 
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            this.cameras.main.width,
+            this.cameras.main.height,
+            0x000000,
             0.6
         );
         this.deathOverlay.setScrollFactor(0); // Nie podąża za kamerą
