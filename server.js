@@ -89,6 +89,8 @@ io.on("connection", (socket) => {
             hasPlantedBomb: false,
             bonusCharges: 0,
             powerups: [false, false, false], // przykładowe powerupy
+            speedEffectStamp: Date.now(),
+            slowEffectStamp: Date.now(),
             currentDirection: "right" // nowa właściwość do przechowywania kierunku ruchu
         };
 
@@ -181,21 +183,39 @@ io.on("connection", (socket) => {
         //server wie jaki gracz ma powerup
         const { id, x, y, type } = data;
         console.log(id, x, y, type);
+
+        //can be buggy
+        if(!map[y][x].powerup)return;
+
         map[y][x].powerup = false;
 
-        players[id].powerups[type] = true; // przyznaj powerup graczowi
-        console.log(players[id]);
-        io.emit('update', players); // wyślij zaktualizowaną listę graczy do wszystkich klientów
+        switch(type){
+            //speed
+            case 0:
+                players[id].powerups[type] = true; // przyznaj powerup graczowi
+                players[id].speedEffectStamp = Date.now() + 10*1000;
+                break;
 
+            //slow
+            case 1:
+                Object.values(players).forEach(ply => {
+                    //give everyone else the slow!
+                    if(ply.id != id){
+                    ply.powerups[type] = true; // przyznaj powerup graczowi
+                    ply.slowEffectStamp = Date.now() + 10*1000;
+                    }
+                });
+
+                break;
+
+            //bonus charges:
+            case 2:
+                players[id].powerups[type] = true;
+                players[id].bonusCharges += 3;
+                break;
+        }
+        io.emit('update', players); 
         io.emit('destroyPowerup', { x, y });
-
-        // TODO: w trakcie posiadania powerupa gdy zbierze sie kolejny tego samego typu to NIE przedluza sie czas działania, trzena zrobic time stampy
-        setTimeout(() => {
-            players[id].powerups[type] = false;
-            console.log("Graczowi konczy sie powerup", players[id]);
-            io.emit('update', players); // wyślij zaktualizowaną listę graczy do wszystkich klientów
-        }, 10000); // powerup trwa 10 sekund
-
     });
 
 
@@ -327,12 +347,7 @@ io.on("connection", (socket) => {
 
         const isOnCooldown = (ply) => {
 
-            if(players[ply.id].powerups[2]){
-                return players[ply.id].bonusCharges > 0
-            }
-            else{
-                return players[ply.id].hasPlantedBomb;
-            }
+            return players[ply.id].bonusCharges > 0 ? false : players[ply.id].hasPlantedBomb;
         }
         const getRangeFor = (ply) => {
             return STANDARD_RANGE;

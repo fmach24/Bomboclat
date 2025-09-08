@@ -50,6 +50,9 @@ export default class GameScene extends Phaser.Scene {
         this.load.image('standing2r', 'assets/animations/standing2r.png');
         this.load.spritesheet('bomb-explosion','assets/animations/bomb-explosion.png', {frameWidth:16, frameHeight:16});
 
+
+        this.load.image('slow-indic', 'assets/slow_indic.png');
+        this.load.image('speed-indic', 'assets/speed_indic.png');
         //breakables
         // this.load.spritesheet("breakable1x1", "assets/breakable1x1.png", {
         //     frameWidth: 64,
@@ -237,7 +240,12 @@ export default class GameScene extends Phaser.Scene {
 
             // Create main sprite
             const sprite = this.add.sprite(0, 0, 'standing1r');
+            
+            const speedIndicatorSprite = this.add.sprite(0,0, 'speed-indic');
+            const slowIndicatorSprite = this.add.sprite(0,0, 'slow-indic');
 
+            //speedIndicatorSprite.setVisible(false);
+            slowIndicatorSprite.setVisible(false);
             // Create nickname text
             const nickname = this.add.text(0, -56, ply.nick || "NICK", {
                 fontSize: "16px",
@@ -275,6 +283,8 @@ export default class GameScene extends Phaser.Scene {
             player.name = ply.id;
             player.hp_bar = hp_bar;
             player.spriteBody = sprite;
+            player.speedIndicator = speedIndicatorSprite;
+            player.slowIndicator = slowIndicatorSprite;
             if (ply.id == this.playerId) {
                 this.player = player;
             }
@@ -391,10 +401,6 @@ export default class GameScene extends Phaser.Scene {
             if (playerContainer && (ply.x != null) && (ply.y != null)) {
                 // console.log(players)
 
-
-                // console.log(ply, players);
-                playerContainer.hp_bar.setText(ply.health + "HP");
-
                 const direction = ply.currentDirection || "right"; // domyślnie w prawo
                 if (direction === "left") {
                     playerContainer.spriteBody.play('left', true);
@@ -406,20 +412,18 @@ export default class GameScene extends Phaser.Scene {
                 // } else if (direction === "down") {
                 //     playerContainer.spriteBody.setFlipX(false);
                 // }
-
+                const hasSpeedEffect = ply.speedEffectStamp >= Date.now();
+                const hasSlowEffect = ply.slowEffectStamp >= Date.now();
                 //jesli to jest nasz gracz
                 if (ply.id == this.playerId) {
-                    //TODO: to gowno
-                    this.player.hp_bar.setText(ply.health + " HP");
-                    console.log(ply.nick, ply.health);
 
                     // Domyślna prędkość
                     // this.speed = 300;
-                    if (ply.powerups[0]) {
-                        this.speed = 300; // Powerup SPEED
+                    if (hasSpeedEffect) {
+                        this.speed = 200; // Powerup SPEED
                     }
-                    else if(ply.powerups[1]){
-                        this.speed = 100; //powerup slow
+                    else if(hasSlowEffect){
+                        this.speed = 75; //powerup slow
                     }
                     else {
                         this.speed = 150; // Brak powerupu SPEED
@@ -438,8 +442,7 @@ export default class GameScene extends Phaser.Scene {
                 else {
 
                     playerContainer.setPosition(ply.x, ply.y);
-                    playerContainer.hp_bar.setText(ply.health + " HP");
-                    console.log(ply.nick, ply.health);
+               
 
                     //gracz ma 0hp
                     if (ply.health <= 0) {
@@ -449,6 +452,10 @@ export default class GameScene extends Phaser.Scene {
                         // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
                     }
                 }
+
+                playerContainer.hp_bar.setText(ply.health + " HP");
+                //playerContainer.slowIndicator.setVisible(hasSlowEffect);
+                //playerContainer.speedIndicator.setVisible(hasSpeedEffect);
             }
 
 
