@@ -374,6 +374,20 @@ export default class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, powerup, (player, powerup) => {
             this.socket.emit('pickedPowerup', { id: this.playerId, x: powerup.getData('x'), y: powerup.getData('y'), type: powerup.getData('type') });
             // powerup.destroy(); // usuń powerupa z mapy
+            const offsetX = Phaser.Math.Between(-20, 20);
+
+            switch(type){
+                case 0:
+                    this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "Speed Effect", "#fbf236");
+                    break;
+                case 1:
+                    this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "Slow Effect", "#639bff");
+                    break;
+                case 2:
+                    this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "+3 BOMBS", "#ac3232");
+                    break;
+            }
+            
         });
     }
 
@@ -660,6 +674,30 @@ export default class GameScene extends Phaser.Scene {
         // Przechowaj referencje do elementów overlay
         this.deathOverlayElements = [this.deathOverlay, panel, title, gameInfo, instruction];
     }
+    
+
+    // Funkcja pomocnicza do efektu "floating text"
+ showFloatingText(x, y, text, color = "#fff") {
+    const floatingText = this.add.text(x, y, text, {
+        fontSize: "16px",
+        color: color,
+        stroke: "#000",
+        strokeThickness: 3
+    }).setOrigin(0.5);
+
+    // Animacja: przesunięcie w górę + fade out
+    this.tweens.add({
+        targets: floatingText,
+        y: y - 40,        // przesuń w górę
+        alpha: 0,         // znikanie
+        duration: 1500,   // czas w ms
+        ease: "Cubic.easeOut",
+        onComplete: () => {
+            floatingText.destroy(); // usuń po animacji
+        }
+    });
+}
+
 
 
 }
