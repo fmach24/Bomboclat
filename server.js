@@ -16,13 +16,16 @@ const DETONATION_TIME = 2.5 * 1000;
 const STANDARD_RANGE = 2;
 const BUFFED_RANGE = 4;
 const HP_MAX = 3;
+const MAX_ACTIVE_POWERUPS = 5;
 
+let currentActivePowerups = 0;
 let mapName = "";
 let mapHeight = 0;
 let mapWidth = 0;
 let map = null;
 let mapCreatedCount = 0; // Licznik graczy którzy wysłali mapCreated
 let powerupTimer = null; // Referencja do timera powerupów
+
 
 //to nie jest na razie uzyteczne ale jakbysmy chcieli zablokowac pojawianie sie powerupoow to zostawiam
 // let powerupTimerStarted = false; // Flaga czy timer powerupów już został uruchomiony
@@ -153,8 +156,10 @@ io.on("connection", (socket) => {
                     return;
                 }
 
-                // Wybierz losowe współrzędne na podstawie rzeczywistych wymiarów
+                if(currentActivePowerups >= MAX_ACTIVE_POWERUPS)
+                    return;
 
+                // Wybierz losowe współrzędne na podstawie rzeczywistych wymiarów
                 while (true) {
                     const x = Math.floor(Math.random() * mapWidth);
                     const y = Math.floor(Math.random() * mapHeight);
@@ -162,6 +167,7 @@ io.on("connection", (socket) => {
 
                     if (!map[y][x].wall && !map[y][x].bomb && !map[y][x].powerup) {
                         map[y][x].powerup = true;
+                        currentActivePowerups++;
                         io.emit('spawnPowerup', { x, y, type: type });
                         console.log("POWERUP:", x, y);
                         console.log("TYPE:", type);
@@ -214,6 +220,7 @@ io.on("connection", (socket) => {
                 players[id].bonusCharges += 3;
                 break;
         }
+        currentActivePowerups--;
         io.emit('update', players); 
         io.emit('destroyPowerup', { x, y });
     });

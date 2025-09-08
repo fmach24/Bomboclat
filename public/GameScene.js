@@ -241,10 +241,10 @@ export default class GameScene extends Phaser.Scene {
             // Create main sprite
             const sprite = this.add.sprite(0, 0, 'standing1r');
             
-            const speedIndicatorSprite = this.add.sprite(0,0, 'speed-indic');
-            const slowIndicatorSprite = this.add.sprite(0,0, 'slow-indic');
-
-            //speedIndicatorSprite.setVisible(false);
+            const speedIndicatorSprite = this.add.sprite(0,20, 'speed-indic');
+            const slowIndicatorSprite = this.add.sprite(0,20, 'slow-indic');
+            
+            speedIndicatorSprite.setVisible(false);
             slowIndicatorSprite.setVisible(false);
             // Create nickname text
             const nickname = this.add.text(0, -56, ply.nick || "NICK", {
@@ -264,7 +264,7 @@ export default class GameScene extends Phaser.Scene {
             hp_bar.name = this.HP_BAR_TAG;
 
             // Put sprite + text into a container
-            const player = this.add.container(spawnPoint.x, spawnPoint.y, [sprite, nickname, hp_bar]);
+            const player = this.add.container(spawnPoint.x, spawnPoint.y, [speedIndicatorSprite, slowIndicatorSprite,sprite, nickname, hp_bar ]);
             
             // Enable physics on the container
             this.physics.world.enable(player);
@@ -454,8 +454,8 @@ export default class GameScene extends Phaser.Scene {
                 }
 
                 playerContainer.hp_bar.setText(ply.health + " HP");
-                //playerContainer.slowIndicator.setVisible(hasSlowEffect);
-                //playerContainer.speedIndicator.setVisible(hasSpeedEffect);
+                playerContainer.slowIndicator.setVisible(hasSlowEffect);
+                playerContainer.speedIndicator.setVisible(hasSpeedEffect);
             }
 
 
