@@ -107,18 +107,9 @@ export default class GameScene extends Phaser.Scene {
 
         this.playerGroup = this.physics.add.group()
 
-        if (spawnPoint) {
-            // utwórz sprite gracza w pozycji spawn1
-            this.player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, "player");
-            this.player.setCollideWorldBounds(true);
-            this.playerGroup.add(this.player)
-            this.player.name = this.playerId; // assign proper id so we can later on find exact sprite:
-        }
-        this.physics.add.collider(this.player, wallsLayer);
-
 
         Object.values(this.players).forEach(ply => {
-            if (ply.id !== this.playerId) {
+
                 const spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
 
                 // Create main sprite
@@ -132,7 +123,7 @@ export default class GameScene extends Phaser.Scene {
                     strokeThickness: 3
                 }).setOrigin(0.5);
 
-                const hp_bar = this.add.text(0, -40, "100%", {
+                const hp_bar = this.add.text(0, -40, "3HP", {
                     fontSize: "16px",
                     color: "#47c070ff",
                     stroke: "#000",
@@ -160,7 +151,10 @@ export default class GameScene extends Phaser.Scene {
                 // Assign ID for later lookup
                 player.name = ply.id;
                 player.hp_bar = hp_bar;
-            }
+                player.spriteBody = sprite;
+                if(ply.id == this.playerId){
+                    this.player = player;
+                }
         });
 
 
@@ -255,7 +249,7 @@ export default class GameScene extends Phaser.Scene {
                 // console.log(players)
 
                 // console.log(ply, players);
-
+                playerContainer.hp_bar.setText(ply.health + "HP");
                 if (ply.id == this.playerId) {
                     // Domyślna prędkość
                     // this.speed = 300;
@@ -268,9 +262,6 @@ export default class GameScene extends Phaser.Scene {
                 }
                 else {
                     playerContainer.setPosition(ply.x, ply.y);
-
-                    playerContainer.hp_bar.setText(ply.health + " HP");
-                    console.log(ply.nick, ply.health);
                 }
             }
 
@@ -302,18 +293,18 @@ export default class GameScene extends Phaser.Scene {
         // proste sterowanie WSAD
         const cursors = this.input.keyboard.createCursorKeys();
 
-        this.player.setVelocity(0);
+        this.player.body.setVelocity(0,0);
 
         if (cursors.left.isDown) {
-            this.player.setVelocityX(-this.speed);
+            this.player.body.setVelocityX(-this.speed);
         } else if (cursors.right.isDown) {
-            this.player.setVelocityX(this.speed);
+            this.player.body.setVelocityX(this.speed);
         }
 
         if (cursors.up.isDown) {
-            this.player.setVelocityY(-this.speed);
+            this.player.body.setVelocityY(-this.speed);
         } else if (cursors.down.isDown) {
-            this.player.setVelocityY(this.speed);
+            this.player.body.setVelocityY(this.speed);
         }
         if (this.player.body.velocity.length() > 0) {
             this.sendUpdate()
