@@ -62,6 +62,7 @@ export default class GameScene extends Phaser.Scene {
         this.socket = data.socket;
         this.speed = 300;
         this.map = null;
+        this.isDead = false; // Flaga czy gracz już umarł
 
         console.log("Players in GameScene:", this.players);
         console.log("My player ID:", this.playerId);
@@ -268,16 +269,26 @@ export default class GameScene extends Phaser.Scene {
             if (playerContainer && (ply.x != null) && (ply.y != null)) {
                 // console.log(players)
 
+
                 // console.log(ply, players);
 
+                //jesli to jest nasz gracz
                 if (ply.id == this.playerId) {
                     // Domyślna prędkość
                     // this.speed = 300;
                     if (ply.powerups[0]) {
-                        this.speed = 600; // Powerup SPEED
+                        this.speed = 300; // Powerup SPEED
                     }
                     else {
-                        this.speed = 300; // Brak powerupu SPEED
+                        this.speed = 150; // Brak powerupu SPEED
+                    }                   
+                    //gracz ma 0hp
+                    if (ply.health <= 0 && !this.isDead) {
+                        this.isDead = true; // Ustaw flagę że gracz umarł
+                        this.showDeathOverlay();
+                        // this.player.setTint(0xff0000); // na czerwono
+                        this.player.disableBody(true, true); // usuń gracza z gry
+                        // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
                     }
                 }
                 else {
@@ -285,6 +296,13 @@ export default class GameScene extends Phaser.Scene {
 
                     playerContainer.hp_bar.setText(ply.health + " HP");
                     console.log(ply.nick, ply.health);
+                    //gracz ma 0hp
+                    if (ply.health <= 0) {
+                        // this.player.setTint(0xff0000); // na czerwono
+                        playerContainer.setVisible(false); // ukryj gracza
+                        playerContainer.setActive(false); // wyłącz gracza
+                        // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
+                    }
                 }
             }
 
@@ -370,6 +388,91 @@ export default class GameScene extends Phaser.Scene {
         if (cursors.space.isDown) {
             this.plantBomb();
         }
+    }
+
+    showDeathOverlay() {
+        // Sprawdź czy overlay już istnieje
+        if (this.deathOverlay) return;
+
+        // Szary filtr na całym ekranie
+        this.deathOverlay = this.add.rectangle(
+            this.cameras.main.centerX, 
+            this.cameras.main.centerY, 
+            this.cameras.main.width, 
+            this.cameras.main.height, 
+            0x000000, 
+            0.6
+        );
+        this.deathOverlay.setScrollFactor(0); // Nie podąża za kamerą
+        this.deathOverlay.setDepth(1000); // Na wierzchu
+
+        // Panel z informacjami
+        const panelWidth = 400;
+        const panelHeight = 300;
+        const panel = this.add.rectangle(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            panelWidth,
+            panelHeight,
+            0x222222,
+            0.9
+        );
+        panel.setScrollFactor(0);
+        panel.setDepth(1001);
+        panel.setStrokeStyle(4, 0xff0000);
+
+        // Tytuł
+        const title = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY - 100,
+            "PRZEGRAŁEŚ!",
+            {
+                fontSize: "32px",
+                color: "#ff0000",
+                fontStyle: "bold",
+                stroke: "#000",
+                strokeThickness: 3
+            }
+        );
+        title.setOrigin(0.5);
+        title.setScrollFactor(0);
+        title.setDepth(1002);
+
+        // Informacje o grze
+        const gameInfo = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY - 40,
+            "Możesz dalej obserwować rozgrywkę\n\nStatystyki:\n• Zgony: 1\n• Czas gry: " + Math.floor(this.time.now / 1000) + "s",
+            {
+                fontSize: "16px",
+                color: "#ffffff",
+                align: "center",
+                stroke: "#000",
+                strokeThickness: 2
+            }
+        );
+        gameInfo.setOrigin(0.5);
+        gameInfo.setScrollFactor(0);
+        gameInfo.setDepth(1002);
+
+        // Instrukcja
+        const instruction = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY + 80,
+            "Obserwuj pozostałych graczy\naby zobaczyć kto wygra!",
+            {
+                fontSize: "14px",
+                color: "#cccccc",
+                align: "center",
+                fontStyle: "italic"
+            }
+        );
+        instruction.setOrigin(0.5);
+        instruction.setScrollFactor(0);
+        instruction.setDepth(1002);
+
+        // Przechowaj referencje do elementów overlay
+        this.deathOverlayElements = [this.deathOverlay, panel, title, gameInfo, instruction];
     }
 
 

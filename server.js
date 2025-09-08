@@ -36,7 +36,7 @@ const players = {};
 
 
 
-// //tworzenie mapy
+// //tworzenie mapy (przenienione do GameScene.js)
 // const map = Array.from({ length: mapHeight }, () =>
 //     Array.from({ length: mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
 // );
@@ -231,8 +231,8 @@ io.on("connection", (socket) => {
 
                     //TODO: probably wanna have some animation for damage
                     p.health--;
+//TODO: mechanika co jesli gracz ma 0hp
                     io.emit('update', players);
-
                 }
 
             });
