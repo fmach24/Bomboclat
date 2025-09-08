@@ -23,6 +23,10 @@ let map = null;
 
 const sockets = {};
 const mapPreferences = {}; // Preferencje map od graczy
+let mapCreatedCount = 0; // Licznik graczy którzy wysłali mapCreated
+
+//to nie jest na razie uzyteczne ale jakbysmy chcieli zablokowac pojawianie sie powerupoow to zostawiam
+// let powerupTimerStarted = false; // Flaga czy timer powerupów już został uruchomiony
 
 //Tu info o pozycji, o hp, o powerupach.
 const players = {};
@@ -117,32 +121,47 @@ io.on("connection", (socket) => {
         }
     });
 
+    //na razie to jest tak że od kazdego gracza server dostaje mapCrated
     socket.on('mapCreated', (data) => {
         mapHeight = data.mapArray.length;
         mapWidth = data.mapArray[0].length;
         map = data.mapArray;
-        
-        //obsluga powerupow
-        setInterval(() => {
-            // czy są gracze (wsm nie potrzebne chyba)
-            if (Object.keys(players).length < REQUIRED_PLAYERS) return;
 
-            // Wybierz losowe współrzędne na podstawie rzeczywistych wymiarów
-            const x = Math.floor(Math.random() * mapWidth);
-            const y = Math.floor(Math.random() * mapHeight);
+        mapCreatedCount++; // Zwiększ licznik
+        console.log(`mapCreated otrzymane od gracza ${mapCreatedCount}/${REQUIRED_PLAYERS}`);
 
-            const type = Math.floor(Math.random() * 3);
+        // Uruchom timer powerupów dopiero gdy wszyscy gracze wyślą mapCreated
+        if (mapCreatedCount === REQUIRED_PLAYERS) {// && !powerupTimerStarted) {
+            // powerupTimerStarted = true;
+            console.log("Wszyscy gracze wysłali mapCreated - uruchamiam timer powerupów");
+            
+            //obsluga powerupow
+            setInterval(() => {
+                // czy są gracze (wsm nie potrzebne chyba)
+                // if (Object.keys(players).length < REQUIRED_PLAYERS) return;
 
-            if (!map[y][x].wall && !map[y][x].bomb && !map[y][x].powerup) {
-                map[y][x].powerup = true;
-                io.emit('spawnPowerup', { x, y, type: type });
-            } else {
-                console.log("zajete miejsce");
-            }
+                // Wybierz losowe współrzędne na podstawie rzeczywistych wymiarów
 
-            console.log("POWERUP:", x, y);
-            console.log("TYPE:", type);
-        }, 10000); // co 10 sekund
+                while (true) {
+                    const x = Math.floor(Math.random() * mapWidth);
+                    const y = Math.floor(Math.random() * mapHeight);
+                    const type = Math.floor(Math.random() * 3);
+
+                    if (!map[y][x].wall && !map[y][x].bomb && !map[y][x].powerup) {
+                        map[y][x].powerup = true;
+                        io.emit('spawnPowerup', { x, y, type: type });
+                        console.log("POWERUP:", x, y);
+                        console.log("TYPE:", type);
+                        break;
+                    } else {
+                        console.log("zajete miejsce");
+                    }
+
+                    console.log("POWERUP:", x, y);
+                    console.log("TYPE:", type);
+                }
+            }, 10000); // co 10 sekund
+        }
     });
 
     //TODO: dokonczyc obsluge powerupow
