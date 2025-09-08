@@ -3,6 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import { v4 as uuidv4 } from "uuid";
 
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -12,7 +13,7 @@ app.use(express.static("public"));
 //na razie const ilosc rgaczy do odpalenia gry
 const REQUIRED_PLAYERS = 2;
 const DETONATION_TIME = 2.5 * 1000;
-const STANDARD_RANGE = 3;
+const STANDARD_RANGE = 2;
 const BUFFED_RANGE = 4;
 const HP_MAX = 3;
 
@@ -90,6 +91,7 @@ io.on("connection", (socket) => {
             powerups: [false, false, false], // przykładowe powerupy
             currentDirection: "right" // nowa właściwość do przechowywania kierunku ruchu
         };
+
 
         // Zapisz preferencję mapy
         if (data.preferredMap) {
@@ -260,8 +262,12 @@ io.on("connection", (socket) => {
 
 
             let x_offset, y_offset;
-
+            const affectedArea = Array.from({ length: mapHeight }, () =>
+                Array.from({ length: mapWidth }, () => ( false))
+            );
             // order of checking: bomb range, world borders, wall
+            
+
 
             // going left:
             x_offset = -1;
@@ -271,6 +277,7 @@ io.on("connection", (socket) => {
                 !map[gridY + y_offset][gridX + x_offset].wall) {
 
                 checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
+                affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 x_offset--;
             }
 
@@ -282,6 +289,7 @@ io.on("connection", (socket) => {
                 !map[gridY + y_offset][gridX + x_offset].wall) {
 
                 checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
+                affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 x_offset++;
             }
 
@@ -293,6 +301,7 @@ io.on("connection", (socket) => {
                 !map[gridY + y_offset][gridX + x_offset].wall) {
 
                 checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
+                affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 y_offset++;
             }
 
@@ -304,13 +313,16 @@ io.on("connection", (socket) => {
                 !map[gridY + y_offset][gridX + x_offset].wall) {
 
                 checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
+                affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 y_offset--;
             }
 
-            // usuń bombę ze środka
+            
             map[gridY][gridX].bomb = null;
             players[bomb.id].hasPlantedBomb = false;
 
+            affectedArea[gridY][gridX] = true;
+            socket.emit("explosionDetails", affectedArea);
         };
 
         const isOnCooldown = (ply) => {
@@ -348,7 +360,7 @@ io.on("connection", (socket) => {
             }
 
             setTimeout(() => {
-                detonateBomb(gridX, gridY, bomb);
+                detonateBomb(gridY, gridX, bomb);
             }, DETONATION_TIME);
 
             io.emit("newBomb", bomb);

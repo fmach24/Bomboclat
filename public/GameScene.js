@@ -1,7 +1,8 @@
 export default class GameScene extends Phaser.Scene {
 
     HP_BAR_TAG = "hp_bar";
-
+    mapHeight = 0;
+    mapWidth = 0;
     constructor() {
         super("GameScene");
 
@@ -47,6 +48,7 @@ export default class GameScene extends Phaser.Scene {
         this.load.image('standing2l', 'assets/animations/standing2l.png');
         this.load.image('standing1r', 'assets/animations/standing1r.png');
         this.load.image('standing2r', 'assets/animations/standing2r.png');
+        this.load.spritesheet('bomb-explosion','assets/animations/bomb-explosion.png', {frameWidth:16, frameHeight:16});
 
         //breakables
         // this.load.spritesheet("breakable1x1", "assets/breakable1x1.png", {
@@ -92,6 +94,8 @@ export default class GameScene extends Phaser.Scene {
         this.socket.on('update', (data) => { this.updatePlayers(data); });
 
         this.socket.on('newBomb', (data) => { this.newBomb(data); });
+
+        this.socket.on('explosionDetails', (data)=>{this.animateExplosion(data);})
 
     }
 
@@ -165,6 +169,13 @@ export default class GameScene extends Phaser.Scene {
             frameRate: 4,
             repeat: -1
         });
+
+        this.anims.create({
+            key:   'bomb-explode',
+            frames: this.anims.generateFrameNumbers('bomb-explosion', {start:0, end:2}),
+            frameRate:10,
+            repeat:0
+        })
     }
 
 
@@ -181,17 +192,17 @@ export default class GameScene extends Phaser.Scene {
         const wallsLayer = map.createLayer("wallsLayer", tileset, 0, 0);
 
         //tworzenie mapArray ktory zostanie wyslany do servera
-        const mapHeight = map.height;
-        console.log("Map height in tiles:", mapHeight);
-        const mapWidth = map.width;
+        this.mapHeight = map.height;
+        console.log("Map height in tiles:", this.mapHeight);
+        this.mapWidth = map.width;
         //tworzenie mapy
-        const mapArray = Array.from({ length: mapHeight }, () =>
-            Array.from({ length: mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
+        const mapArray = Array.from({ length: this.mapHeight }, () =>
+            Array.from({ length: this.mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
         );
 
         // Sprawdź każdy kafelek w wallsLayer i ustaw wall = true jeśli kafelek istnieje
-        for (let y = 0; y < mapHeight; y++) {
-            for (let x = 0; x < mapWidth; x++) {
+        for (let y = 0; y < this.mapHeight; y++) {
+            for (let x = 0; x < this.mapWidth; x++) {
                 const tile = wallsLayer.getTileAt(x, y);
                 if (tile !== null) {
                     mapArray[y][x].wall = true;
@@ -413,7 +424,7 @@ export default class GameScene extends Phaser.Scene {
                     else {
                         this.speed = 150; // Brak powerupu SPEED
                     }
-                    
+
                     //gracz ma 0hp
                     if (ply.health <= 0) {
                         this.isDead = true; // Ustaw flagę że gracz umarł
@@ -538,6 +549,23 @@ export default class GameScene extends Phaser.Scene {
 
         if (cursors.space.isDown) {
             this.plantBomb();
+        }
+    }
+
+    animateExplosion(area){
+        for (let y = 0; y < this.mapHeight; y++) {
+            for (let x = 0; x < this.mapWidth; x++) {
+                if(area[y][x]){
+                    const effect= this.add.sprite(y * 64 +32, x*64 + 32, 'bomb-explosion');
+                    
+                    effect.play('bomb-explode');
+                    effect.on('animationcomplete', () => {
+                        effect.destroy();
+                    });
+
+                }      
+            }
+            
         }
     }
 
