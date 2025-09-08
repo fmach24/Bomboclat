@@ -3,8 +3,8 @@ import GameScene from "./GameScene.js";
 
 const config = {
   type: Phaser.AUTO,
-  width: 640,
-  height: 640,
+  width: 1400,
+  height: 700,
   parent: "game-container", // <-- to jest kluczowe!
   dom: { createContainer: true }, // <-- DODAJ TO!
   physics: {

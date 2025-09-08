@@ -8,9 +8,13 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        // mapa i tileset
+        //mapy
         this.load.tilemapTiledJSON("beachMap", "assets/beachMap.tmj");
         this.load.image("beachTiles", "assets/beachTiles.png");
+
+        this.load.tilemapTiledJSON("forestMap", "assets/forestMap.tmj");
+        this.load.image("forestTiles", "assets/forestTiles.png");
+
         // sprite gracza
         this.load.spritesheet("player", "assets/player.png", {
             frameWidth: 64,
@@ -58,13 +62,14 @@ export default class GameScene extends Phaser.Scene {
         this.socket = data.socket;
         this.speed = 300;
         this.map = null;
+        this.isDead = false; // Flaga czy gracz już umarł
 
         console.log("Players in GameScene:", this.players);
         console.log("My player ID:", this.playerId);
         console.log("My socket:", this.socket);
+        console.log("Loading map:", this.mapName);
 
         this.buildMap(data);
-
 
         //game network event handlers:
 
@@ -75,7 +80,6 @@ export default class GameScene extends Phaser.Scene {
         this.socket.on('update', (data) => { this.updatePlayers(data); });
 
         this.socket.on('newBomb', (data) => { this.newBomb(data); });
-
     }
 
 
@@ -91,12 +95,34 @@ export default class GameScene extends Phaser.Scene {
         const groundLayer = map.createLayer("groundLayer", tileset, 0, 0);
         const wallsLayer = map.createLayer("wallsLayer", tileset, 0, 0);
 
+        //tworzenie mapArray ktory zostanie wyslany do servera
+        const mapHeight = map.height;
+        console.log("Map height in tiles:", mapHeight);
+        const mapWidth = map.width;
+        //tworzenie mapy
+        const mapArray = Array.from({ length: mapHeight }, () =>
+            Array.from({ length: mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
+        );
+
+        // Sprawdź każdy kafelek w wallsLayer i ustaw wall = true jeśli kafelek istnieje
+        for (let y = 0; y < mapHeight; y++) {
+            for (let x = 0; x < mapWidth; x++) {
+                const tile = wallsLayer.getTileAt(x, y);
+                if (tile !== null) {
+                    mapArray[y][x].wall = true;
+                }
+            }
+        }
+        console.log("Map:", mapArray);
+
         // Kolizje dla ścian
         // wallsLayer.setCollisionByProperty({ collides: true });
 
+
+
+
+        //kolizje scian
         wallsLayer.setCollisionByExclusion([-1]);
-
-
 
         // Warstwa obiektów: Spawns
         const spawnLayer = map.getObjectLayer("spawnPoints");
@@ -157,42 +183,31 @@ export default class GameScene extends Phaser.Scene {
                 }
         });
 
+        // aktualnie nieużywane
+        // spawning breakable walls
+        // const breakableLayer = map.getObjectLayer("breakableSpawns");
+        // const breakable1x1 = breakableLayer.objects.filter(obj => obj.type === "breakable1x1");
+        // const breakable2x1 = breakableLayer.objects.filter(obj => obj.type === "breakable2x1");
 
-        //spawning breakable walls
-        const breakableLayer = map.getObjectLayer("breakableSpawns");
-        const breakable1x1 = breakableLayer.objects.filter(obj => obj.type === "breakable1x1");
-        const breakable2x1 = breakableLayer.objects.filter(obj => obj.type === "breakable2x1");
+        // this.breakablesGroup = this.physics.add.staticGroup();
 
-        this.breakablesGroup = this.physics.add.staticGroup();
-
-        for (let obj of breakable1x1) {
-            const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable1x1");
-            wall.setData("hp", null); // przykładowe HP
-            wall.setData("x", obj.x);
-            wall.setData("y", obj.y);
-            this.breakablesGroup.add(wall);
-        }
-        
-        for (let obj of breakable2x1) {
-            const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable2x1");
-            wall.setData("hp", null); // przykładowe HP
-            wall.setData("x", obj.x);
-            wall.setData("y", obj.y);
-            this.breakablesGroup.add(wall);
-        }
-
-        this.physics.add.collider(this.player, this.breakablesGroup);
-
-        // if (powerupLayer) {
-        //     powerupLayer.objects.forEach(obj => {
-        //         if (obj.name.startsWith("powerup")) {
-        //             const pu = this.physics.add.sprite(obj.x, obj.y, "powerup");
-        //             pu.setData("kind", obj.type || "default");
-        //         }
-        //     });
+        // for (let obj of breakable1x1) {
+        //     const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable1x1");
+        //     wall.setData("hp", null); // przykładowe HP
+        //     wall.setData("x", obj.x);
+        //     wall.setData("y", obj.y);
+        //     this.breakablesGroup.add(wall);
         // }
 
+        // for (let obj of breakable2x1) {
+        //     const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable2x1");
+        //     wall.setData("hp", null); // przykładowe HP
+        //     wall.setData("x", obj.x);
+        //     wall.setData("y", obj.y);
+        //     this.breakablesGroup.add(wall);
+        // }
 
+        // this.physics.add.collider(this.player, this.breakablesGroup);
 
         // Kamera podąża za graczem
         this.cameras.main.startFollow(this.player);
@@ -204,6 +219,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.bombGroup = this.physics.add.group();
 
+        this.socket.emit('mapCreated', { mapArray: mapArray });
     }
 
     //NETWORK:
@@ -244,24 +260,45 @@ export default class GameScene extends Phaser.Scene {
         Object.values(players).forEach(ply => {
 
             const playerContainer = this.playerGroup.getChildren().find(x => x.name == ply.id);
-            
+
             if (playerContainer && (ply.x != null) && (ply.y != null)) {
                 // console.log(players)
 
+
                 // console.log(ply, players);
                 playerContainer.hp_bar.setText(ply.health + "HP");
+
+                //jesli to jest nasz gracz
                 if (ply.id == this.playerId) {
                     // Domyślna prędkość
                     // this.speed = 300;
                     if (ply.powerups[0]) {
-                        this.speed = 600; // Powerup SPEED
+                        this.speed = 300; // Powerup SPEED
                     }
                     else {
-                        this.speed = 300; // Brak powerupu SPEED
+                        this.speed = 150; // Brak powerupu SPEED
+                    }                   
+                    //gracz ma 0hp
+                    if (ply.health <= 0 && !this.isDead) {
+                        this.isDead = true; // Ustaw flagę że gracz umarł
+                        this.showDeathOverlay();
+                        // this.player.setTint(0xff0000); // na czerwono
+                        this.player.disableBody(true, true); // usuń gracza z gry
+                        // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
                     }
                 }
                 else {
                     playerContainer.setPosition(ply.x, ply.y);
+
+                    playerContainer.hp_bar.setText(ply.health + " HP");
+                    console.log(ply.nick, ply.health);
+                    //gracz ma 0hp
+                    if (ply.health <= 0) {
+                        // this.player.setTint(0xff0000); // na czerwono
+                        playerContainer.setVisible(false); // ukryj gracza
+                        playerContainer.setActive(false); // wyłącz gracza
+                        // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
+                    }
                 }
             }
 
@@ -269,7 +306,6 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
-    
 
 
     sendUpdate() {
@@ -290,22 +326,58 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update() {
-        // proste sterowanie WSAD
+        // Sterowanie z historią wciśniętych klawiszy
         const cursors = this.input.keyboard.createCursorKeys();
+
+        // Inicjalizuj stos klawiszy jeśli nie istnieje
+        if (!this.keyStack) {
+            this.keyStack = [];
+        }
+
+        // Dodaj nowo wciśnięte klawisze na górę stosu
+        if (Phaser.Input.Keyboard.JustDown(cursors.left) && !this.keyStack.includes('left')) {
+            this.keyStack.push('left');
+        }
+        if (Phaser.Input.Keyboard.JustDown(cursors.right) && !this.keyStack.includes('right')) {
+            this.keyStack.push('right');
+        }
+        if (Phaser.Input.Keyboard.JustDown(cursors.up) && !this.keyStack.includes('up')) {
+            this.keyStack.push('up');
+        }
+        if (Phaser.Input.Keyboard.JustDown(cursors.down) && !this.keyStack.includes('down')) {
+            this.keyStack.push('down');
+        }
+
+        // Usuń puszczone klawisze ze stosu
+        if (!cursors.left.isDown) {
+            this.keyStack = this.keyStack.filter(key => key !== 'left');
+        }
+        if (!cursors.right.isDown) {
+            this.keyStack = this.keyStack.filter(key => key !== 'right');
+        }
+        if (!cursors.up.isDown) {
+            this.keyStack = this.keyStack.filter(key => key !== 'up');
+        }
+        if (!cursors.down.isDown) {
+            this.keyStack = this.keyStack.filter(key => key !== 'down');
+        }
+
 
         this.player.body.setVelocity(0,0);
 
-        if (cursors.left.isDown) {
-            this.player.body.setVelocityX(-this.speed);
-        } else if (cursors.right.isDown) {
-            this.player.body.setVelocityX(this.speed);
-        }
+        // Użyj ostatniego klawisza ze stosu (najnowszy wciśnięty)
+        const currentKey = this.keyStack[this.keyStack.length - 1];
 
-        if (cursors.up.isDown) {
+        if (currentKey === 'left') {
+            this.player.body.setVelocityX(-this.speed);
+        } else if (currentKey === 'right') {
+            this.player.body.setVelocityX(this.speed);
+        } else if (currentKey === 'up') {
             this.player.body.setVelocityY(-this.speed);
-        } else if (cursors.down.isDown) {
+        } else if (currentKey === 'down') {
             this.player.body.setVelocityY(this.speed);
         }
+
         if (this.player.body.velocity.length() > 0) {
             this.sendUpdate()
         }
@@ -313,6 +385,91 @@ export default class GameScene extends Phaser.Scene {
         if (cursors.space.isDown) {
             this.plantBomb();
         }
+    }
+
+    showDeathOverlay() {
+        // Sprawdź czy overlay już istnieje
+        if (this.deathOverlay) return;
+
+        // Szary filtr na całym ekranie
+        this.deathOverlay = this.add.rectangle(
+            this.cameras.main.centerX, 
+            this.cameras.main.centerY, 
+            this.cameras.main.width, 
+            this.cameras.main.height, 
+            0x000000, 
+            0.6
+        );
+        this.deathOverlay.setScrollFactor(0); // Nie podąża za kamerą
+        this.deathOverlay.setDepth(1000); // Na wierzchu
+
+        // Panel z informacjami
+        const panelWidth = 400;
+        const panelHeight = 300;
+        const panel = this.add.rectangle(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            panelWidth,
+            panelHeight,
+            0x222222,
+            0.9
+        );
+        panel.setScrollFactor(0);
+        panel.setDepth(1001);
+        panel.setStrokeStyle(4, 0xff0000);
+
+        // Tytuł
+        const title = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY - 100,
+            "PRZEGRAŁEŚ!",
+            {
+                fontSize: "32px",
+                color: "#ff0000",
+                fontStyle: "bold",
+                stroke: "#000",
+                strokeThickness: 3
+            }
+        );
+        title.setOrigin(0.5);
+        title.setScrollFactor(0);
+        title.setDepth(1002);
+
+        // Informacje o grze
+        const gameInfo = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY - 40,
+            "Możesz dalej obserwować rozgrywkę\n\nStatystyki:\n• Zgony: 1\n• Czas gry: " + Math.floor(this.time.now / 1000) + "s",
+            {
+                fontSize: "16px",
+                color: "#ffffff",
+                align: "center",
+                stroke: "#000",
+                strokeThickness: 2
+            }
+        );
+        gameInfo.setOrigin(0.5);
+        gameInfo.setScrollFactor(0);
+        gameInfo.setDepth(1002);
+
+        // Instrukcja
+        const instruction = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY + 80,
+            "Obserwuj pozostałych graczy\naby zobaczyć kto wygra!",
+            {
+                fontSize: "14px",
+                color: "#cccccc",
+                align: "center",
+                fontStyle: "italic"
+            }
+        );
+        instruction.setOrigin(0.5);
+        instruction.setScrollFactor(0);
+        instruction.setDepth(1002);
+
+        // Przechowaj referencje do elementów overlay
+        this.deathOverlayElements = [this.deathOverlay, panel, title, gameInfo, instruction];
     }
 
 

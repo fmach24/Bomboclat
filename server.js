@@ -9,29 +9,51 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
+//na razie const ilosc rgaczy do odpalenia gry
+const REQUIRED_PLAYERS = 2;
 const DETONATION_TIME = 2.5 * 1000;
 const STANDARD_RANGE = 3;
 const BUFFED_RANGE = 4;
 const HP_MAX = 3;
-// TODO: map name powninno byc ustawiane przez graczy, na razei jest hardcoded
+
 let mapName = "";
-const sockets = {};
+let mapHeight = 0;
+let mapWidth = 0;
+let map = null;
+let mapCreatedCount = 0; // Licznik graczy którzy wysłali mapCreated
+
+//to nie jest na razie uzyteczne ale jakbysmy chcieli zablokowac pojawianie sie powerupoow to zostawiam
+// let powerupTimerStarted = false; // Flaga czy timer powerupów już został uruchomiony
 
 //Tu info o pozycji, o hp, o powerupach.
+const sockets = {};
+const mapPreferences = {}; // Preferencje map od graczy
 const players = {};
 
-//tworzenie mapy
-const map = Array.from({ length: 10 }, () =>
-    Array.from({ length: 10 }, () => ({ bomb: null, powerup: false, wall: false }))
-);
 
-for (let i = 0; i < 10; i++) {
-    map[i][0].wall = true;
-    map[i][9].wall = true;
-    map[0][i].wall = true;
-    map[9][i].wall = true;
-}
-// console.log("Map:", map);
+
+
+
+
+
+// //tworzenie mapy (przenienione do GameScene.js)
+// const map = Array.from({ length: mapHeight }, () =>
+//     Array.from({ length: mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
+// );
+
+// for (let i = 0; i < mapHeight; i++) {
+//     map[i][0].wall = true;
+//     map[i][mapWidth - 1].wall = true;
+// }
+// for (let i = 0; i < mapWidth; i++) {
+//     map[0][i].wall = true;
+//     map[mapHeight - 1][i].wall = true;
+// }
+// // console.log("Map:", map);
+
+
+
+
 
 function snapToGrid(value, gridSize) {
     return Math.floor(value / gridSize) * gridSize;
@@ -65,12 +87,27 @@ io.on("connection", (socket) => {
             powerups: [false, false, false] // przykładowe powerupy
         };
 
+        // Zapisz preferencję mapy
+        if (data.preferredMap) {
+            mapPreferences[playerId] = data.preferredMap;
+        }
+
         console.log("User connected:", socket.id);
         console.log("Current sockets:", sockets);
-
+        console.log("Map preferences:", mapPreferences);
+//TODO: gdy gra sie zacznie i osobna wyjdzie z gry i dolaczy znowu, to zacznie nowa gre wtedy, moze zrobic tak, że sockets beda usuwane po rozpoczaciu gry?
         //gdy jest 4 graczy
-        if (Object.keys(sockets).length === 2) {
-            mapName = "beach";
+        if (Object.keys(sockets).length === REQUIRED_PLAYERS) {
+            // Losuj mapę z preferencji graczy
+            const availableMaps = Object.values(mapPreferences);
+            if (availableMaps.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableMaps.length);
+                mapName = availableMaps[randomIndex];
+            } else {
+                mapName = "beach"; // Fallback jeśli brak preferencji
+            }
+
+            console.log("Selected map:", mapName);
 
             //tmp assign some start positions.
             let i = 1;
@@ -83,25 +120,49 @@ io.on("connection", (socket) => {
         }
     });
 
-    //obsluga powerupow
-    setInterval(() => {
-        // Wybierz losowe współrzędne
-        const x = Math.floor(Math.random() * Object.keys(map).length);
-        const y = Math.floor(Math.random() * Object.keys(map).length);
+    //na razie to jest tak że od kazdego gracza server dostaje mapCrated
+    socket.on('mapCreated', (data) => {
+        mapHeight = data.mapArray.length;
+        mapWidth = data.mapArray[0].length;
+        map = data.mapArray;
 
-        const type = Math.floor(Math.random() * 3);
+        mapCreatedCount++; // Zwiększ licznik
+        console.log(`mapCreated otrzymane od gracza ${mapCreatedCount}/${REQUIRED_PLAYERS}`);
 
-        if (!map[x][y].wall && !map[x][y].bomb && !map[x][y].powerup) {
-            map[x][y].powerup = true;
-            io.emit('spawnPowerup', { x, y, type: type });
+        // Uruchom timer powerupów dopiero gdy wszyscy gracze wyślą mapCreated
+        if (mapCreatedCount === REQUIRED_PLAYERS) {// && !powerupTimerStarted) {
+            // powerupTimerStarted = true;
+            console.log("Wszyscy gracze wysłali mapCreated - uruchamiam timer powerupów");
+            
+            //obsluga powerupow
+            setInterval(() => {
+
+                // gdy nie ma graczy nie spawnuj powerupow
+                if (Object.keys(players).length === 0) return;
+
+                // Wybierz losowe współrzędne na podstawie rzeczywistych wymiarów
+
+                while (true) {
+                    const x = Math.floor(Math.random() * mapWidth);
+                    const y = Math.floor(Math.random() * mapHeight);
+                    const type = Math.floor(Math.random() * 3);
+
+                    if (!map[y][x].wall && !map[y][x].bomb && !map[y][x].powerup) {
+                        map[y][x].powerup = true;
+                        io.emit('spawnPowerup', { x, y, type: type });
+                        console.log("POWERUP:", x, y);
+                        console.log("TYPE:", type);
+                        break;
+                    } else {
+                        console.log("zajete miejsce");
+                    }
+
+                    console.log("POWERUP:", x, y);
+                    console.log("TYPE:", type);
+                }
+            }, 10000); // co 10 sekund
         }
-        else {
-            console.log("zajete miejsce");
-        }
-
-        console.log("POWERUP:", x, y);
-        console.log("TYPE:", type);
-    }, 10000); // co 0.2 sekund
+    });
 
     //TODO: dokonczyc obsluge powerupow
     //obsługa zebrania powerupa
@@ -109,7 +170,7 @@ io.on("connection", (socket) => {
         //server wie jaki gracz ma powerup
         const { id, x, y, type } = data;
         console.log(id, x, y, type);
-        map[x][y].powerup = false;
+        map[y][x].powerup = false;
 
         players[id].powerups[type] = true; // przyznaj powerup graczowi
         console.log(players[id]);
@@ -130,7 +191,7 @@ io.on("connection", (socket) => {
     socket.on('moved', (data) => {
 
         //When game is inproperly started it crushes the server thats what the null check is for
-        if(!players[data.id])
+        if (!players[data.id])
             return;
         players[data.id].x = data.x
         players[data.id].y = data.y
@@ -145,6 +206,8 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         delete sockets[socket.id];
         delete players[playerId];
+        delete mapPreferences[playerId];
+        mapCreatedCount = 0; // Zmniejsz licznik
 
         console.log("User disconnected:", socket.id);
         console.log("Current sockets:", sockets);
@@ -165,18 +228,18 @@ io.on("connection", (socket) => {
                 const playerGridY = toMapIndex(snapToGrid(p.y, 64), 64);
 
                 if (playerGridX == x && playerGridY == y) {
-                    
+
                     //TODO: probably wanna have some animation for damage
                     p.health--;
+//TODO: mechanika co jesli gracz ma 0hp
                     io.emit('update', players);
-                
                 }
 
             });
         }
 
         const detonateBomb = (gridX, gridY, bomb) => {
-
+            // TODO: TUTAJ jest hardcoded xy mapy, teraz jest zdefiniowane wyzej przy tworzeniu mapy, ale nie zmieniam tu bo nw czy sie nie rozjebie cos
             const mapWidth = 10;
             const mapHeight = 10;
 
@@ -256,7 +319,7 @@ io.on("connection", (socket) => {
 
             const bomb = { range: getRangeFor(ply), id: ply.id, timeout: DETONATION_TIME, x: bombX, y: bombY };
             map[gridX][gridY].bomb = bomb;
-            
+
             setTimeout(() => {
                 detonateBomb(gridX, gridY, bomb);
             }, DETONATION_TIME);
