@@ -10,7 +10,7 @@ const io = new Server(server);
 app.use(express.static("public"));
 
 //na razie const ilosc rgaczy do odpalenia gry
-const REQUIRED_PLAYERS = 3;
+const REQUIRED_PLAYERS = 2;
 const DETONATION_TIME = 2.5 * 1000;
 const STANDARD_RANGE = 3;
 const BUFFED_RANGE = 4;
@@ -85,6 +85,8 @@ io.on("connection", (socket) => {
             health: HP_MAX,
             x: null,
             y: null,
+            hasPlantedBomb: false,
+            bonusCharges: 0,
             powerups: [false, false, false], // przykładowe powerupy
             currentDirection: "right" // nowa właściwość do przechowywania kierunku ruchu
         };
@@ -307,12 +309,18 @@ io.on("connection", (socket) => {
 
             // usuń bombę ze środka
             map[gridY][gridX].bomb = null;
+            players[bomb.id].hasPlantedBomb = false;
 
         };
 
-        const isOnCooldown = () => {
+        const isOnCooldown = (ply) => {
 
-            return false;
+            if(players[ply.id].powerups[2]){
+                return players[ply.id].bonusCharges > 0
+            }
+            else{
+                return players[ply.id].hasPlantedBomb;
+            }
         }
         const getRangeFor = (ply) => {
             return STANDARD_RANGE;
@@ -333,6 +341,11 @@ io.on("connection", (socket) => {
 
             const bomb = { range: getRangeFor(ply), id: ply.id, timeout: DETONATION_TIME, x: bombX, y: bombY };
             map[gridY][gridX].bomb = bomb;
+            players[ply.id].hasPlantedBomb = true;
+
+            if(players[ply.id].powerups[2]){
+                players[ply.id].bonusCharges = Math.max(0, players[ply.id].bonusCharges-1);
+            }
 
             setTimeout(() => {
                 detonateBomb(gridX, gridY, bomb);

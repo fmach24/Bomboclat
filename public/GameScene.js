@@ -407,9 +407,13 @@ export default class GameScene extends Phaser.Scene {
                     if (ply.powerups[0]) {
                         this.speed = 300; // Powerup SPEED
                     }
+                    else if(ply.powerups[1]){
+                        this.speed = 100; //powerup slow
+                    }
                     else {
                         this.speed = 150; // Brak powerupu SPEED
                     }
+                    
                     //gracz ma 0hp
                     if (ply.health <= 0) {
                         this.isDead = true; // Ustaw flagę że gracz umarł
