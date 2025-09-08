@@ -15,20 +15,19 @@ const DETONATION_TIME = 2.5 * 1000;
 const STANDARD_RANGE = 3;
 const BUFFED_RANGE = 4;
 const HP_MAX = 3;
-let MAP_NAME = "";
 
+let mapName = "";
 let mapHeight = 0;
 let mapWidth = 0;
 let map = null;
-
-const sockets = {};
-const mapPreferences = {}; // Preferencje map od graczy
 let mapCreatedCount = 0; // Licznik graczy którzy wysłali mapCreated
 
 //to nie jest na razie uzyteczne ale jakbysmy chcieli zablokowac pojawianie sie powerupoow to zostawiam
 // let powerupTimerStarted = false; // Flaga czy timer powerupów już został uruchomiony
 
 //Tu info o pozycji, o hp, o powerupach.
+const sockets = {};
+const mapPreferences = {}; // Preferencje map od graczy
 const players = {};
 
 
@@ -103,12 +102,12 @@ io.on("connection", (socket) => {
             const availableMaps = Object.values(mapPreferences);
             if (availableMaps.length > 0) {
                 const randomIndex = Math.floor(Math.random() * availableMaps.length);
-                MAP_NAME = availableMaps[randomIndex];
+                mapName = availableMaps[randomIndex];
             } else {
-                MAP_NAME = "beach"; // Fallback jeśli brak preferencji
+                mapName = "beach"; // Fallback jeśli brak preferencji
             }
 
-            console.log("Selected map:", MAP_NAME);
+            console.log("Selected map:", mapName);
 
             //tmp assign some start positions.
             let i = 1;
@@ -117,7 +116,7 @@ io.on("connection", (socket) => {
                 i++;
             }
 
-            io.emit("startGame", sockets, players, MAP_NAME); // wyślij sygnał do wszystkich, że gra się zaczyna
+            io.emit("startGame", sockets, players, mapName); // wyślij sygnał do wszystkich, że gra się zaczyna
         }
     });
 
