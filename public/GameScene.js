@@ -189,56 +189,9 @@ export default class GameScene extends Phaser.Scene {
 
         this.playerGroup = this.physics.add.group()
 
-        if (spawnPoint) {
-            // utwórz sprite gracza w pozycji spawn1
-            const sprite = this.add.sprite(0, 0, 'player');
-
-            const nickname = this.add.text(0, -56, this.players[this.playerId].nick || "NICK", {
-                fontSize: "16px",
-                color: "#fff",
-                stroke: "#000",
-                strokeThickness: 3
-            }).setOrigin(0.5);
-
-
-            const hp_bar = this.add.text(0, -40, this.players[this.playerId].health + " HP", {
-                fontSize: "16px",
-                color: "#47c070ff",
-                stroke: "#000",
-                strokeThickness: 4
-            }).setOrigin(0.5);
-
-            hp_bar.name = this.HP_BAR_TAG;
-
-            // Put sprite + text into a container
-            this.player = this.add.container(spawnPoint.x, spawnPoint.y, [sprite, nickname, hp_bar]);
-
-            // Enable physics on the container
-            this.physics.world.enable(this.player);
-
-            // Adjust body size to match sprite
-            this.player.body.setSize(sprite.width, sprite.height);
-            this.player.body.setOffset(-sprite.width / 2, -sprite.height / 2);
-
-            // Add collisions
-            this.physics.add.collider(this.player, wallsLayer);
-
-            // Add to player group
-            this.playerGroup.add(this.player);
-
-            // Assign ID for later lookup
-            this.player.name = this.playerId;
-            this.player.hp_bar = hp_bar;
-
-            // this.player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, "player");
-            // // this.player.setCollideWorldBounds(true);
-            // this.playerGroup.add(this.player)
-            // this.player.name = this.playerId; // assign proper id so we can later on find exact sprite:
-        }
-        // this.physics.add.collider(this.player, wallsLayer);
 
         Object.values(this.players).forEach(ply => {
-            if (ply.id !== this.playerId) { //dla reszty graczy
+
                 const spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
 
                 // Create main sprite
@@ -280,7 +233,10 @@ export default class GameScene extends Phaser.Scene {
                 // Assign ID for later lookup
                 player.name = ply.id;
                 player.hp_bar = hp_bar;
-            }
+                player.spriteBody = sprite;
+                if(ply.id == this.playerId){
+                    this.player = player;
+                }
         });
 
         // aktualnie nieużywane
@@ -394,6 +350,7 @@ export default class GameScene extends Phaser.Scene {
 
 
                 // console.log(ply, players);
+                playerContainer.hp_bar.setText(ply.health + "HP");
 
                 //jesli to jest nasz gracz
                 if (ply.id == this.playerId) {
@@ -506,10 +463,8 @@ export default class GameScene extends Phaser.Scene {
             this.keyStack = this.keyStack.filter(key => key !== 'down');
         }
 
-        // Sprawdź czy kontener ma body przed użyciem
-        if (!this.player.body) return;
 
-        this.player.body.setVelocity(0, 0);
+        this.player.body.setVelocity(0,0);
 
         // Użyj ostatniego klawisza ze stosu (najnowszy wciśnięty)
         const currentKey = this.keyStack[this.keyStack.length - 1];
