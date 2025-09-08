@@ -96,7 +96,7 @@ io.on("connection", (socket) => {
         console.log("User connected:", socket.id);
         console.log("Current sockets:", sockets);
         console.log("Map preferences:", mapPreferences);
-
+//TODO: gdy gra sie zacznie i osobna wyjdzie z gry i dolaczy znowu, to zacznie nowa gre wtedy, moze zrobic tak, że sockets beda usuwane po rozpoczaciu gry?
         //gdy jest 4 graczy
         if (Object.keys(sockets).length === REQUIRED_PLAYERS) {
             // Losuj mapę z preferencji graczy
@@ -137,8 +137,9 @@ io.on("connection", (socket) => {
             
             //obsluga powerupow
             setInterval(() => {
-                // czy są gracze (wsm nie potrzebne chyba)
-                // if (Object.keys(players).length < REQUIRED_PLAYERS) return;
+
+                // gdy nie ma graczy nie spawnuj powerupow
+                if (Object.keys(players).length === 0) return;
 
                 // Wybierz losowe współrzędne na podstawie rzeczywistych wymiarów
 
@@ -170,7 +171,7 @@ io.on("connection", (socket) => {
         //server wie jaki gracz ma powerup
         const { id, x, y, type } = data;
         console.log(id, x, y, type);
-        map[x][y].powerup = false;
+        map[y][x].powerup = false;
 
         players[id].powerups[type] = true; // przyznaj powerup graczowi
         console.log(players[id]);
@@ -206,9 +207,8 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         delete sockets[socket.id];
         delete players[playerId];
-        if (playerId) {
-            delete mapPreferences[playerId];
-        }
+        delete mapPreferences[playerId];
+        mapCreatedCount = 0; // Zmniejsz licznik
 
         console.log("User disconnected:", socket.id);
         console.log("Current sockets:", sockets);
