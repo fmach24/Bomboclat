@@ -266,9 +266,9 @@ io.on("connection", (socket) => {
             y_offset = 0;
             while (Math.abs(x_offset) <= bomb.range &&
                 gridX + x_offset >= 0 &&
-                !map[gridX + x_offset][gridY + y_offset].wall) {
+                !map[gridY + y_offset][gridX + x_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
                 x_offset--;
             }
 
@@ -277,9 +277,9 @@ io.on("connection", (socket) => {
             y_offset = 0;
             while (x_offset <= bomb.range &&
                 gridX + x_offset < mapWidth &&
-                !map[gridX + x_offset][gridY + y_offset].wall) {
+                !map[gridY + y_offset][gridX + x_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
                 x_offset++;
             }
 
@@ -288,9 +288,9 @@ io.on("connection", (socket) => {
             y_offset = 1;
             while (y_offset <= bomb.range &&
                 gridY + y_offset < mapHeight &&
-                !map[gridX + x_offset][gridY + y_offset].wall) {
+                !map[gridY + y_offset][gridX + x_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
                 y_offset++;
             }
 
@@ -299,14 +299,14 @@ io.on("connection", (socket) => {
             y_offset = -1;
             while (Math.abs(y_offset) <= bomb.range &&
                 gridY + y_offset >= 0 &&
-                !map[gridX + x_offset][gridY + y_offset].wall) {
+                !map[gridY + y_offset][gridX + x_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset);
+                checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
                 y_offset--;
             }
 
             // usuń bombę ze środka
-            map[gridX][gridY].bomb = null;
+            map[gridY][gridX].bomb = null;
 
         };
 
@@ -329,10 +329,10 @@ io.on("connection", (socket) => {
         const gridY = Math.floor(bombY / 64);
 
         if (!isOnCooldown(ply)
-            && map[gridX][gridY].bomb == null) {
+            && map[gridY][gridX].bomb == null) {
 
             const bomb = { range: getRangeFor(ply), id: ply.id, timeout: DETONATION_TIME, x: bombX, y: bombY };
-            map[gridX][gridY].bomb = bomb;
+            map[gridY][gridX].bomb = bomb;
 
             setTimeout(() => {
                 detonateBomb(gridX, gridY, bomb);
