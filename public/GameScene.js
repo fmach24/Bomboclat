@@ -42,6 +42,12 @@ export default class GameScene extends Phaser.Scene {
             this.load.image(`bomba${i}`, `assets/animations/bomba${i}.png`);
         }
 
+        // Animacje gracza - lewo/prawo
+        this.load.image('standing1l', 'assets/animations/standing1l.png');
+        this.load.image('standing2l', 'assets/animations/standing2l.png');
+        this.load.image('standing1r', 'assets/animations/standing1r.png');
+        this.load.image('standing2r', 'assets/animations/standing2r.png');
+
         //breakables
         // this.load.spritesheet("breakable1x1", "assets/breakable1x1.png", {
         //     frameWidth: 64,
@@ -67,6 +73,9 @@ export default class GameScene extends Phaser.Scene {
         this.map = null;
         this.isDead = false; // Flaga czy gracz już umarł
 
+        // Tworzenie animacji powerupów i gracza
+        this.createAnimations();
+
         console.log("Players in GameScene:", this.players);
         console.log("My player ID:", this.playerId);
         console.log("My socket:", this.socket);
@@ -84,11 +93,9 @@ export default class GameScene extends Phaser.Scene {
 
         this.socket.on('newBomb', (data) => { this.newBomb(data); });
 
-        // Tworzenie animacji powerupów
-        this.createPowerupAnimations();
     }
 
-    createPowerupAnimations() {
+    createAnimations() {
         // Animacja speed (powerup0) - 12 klatek
         const speedFrames = [];
         for (let i = 1; i <= 12; i++) {
@@ -136,6 +143,28 @@ export default class GameScene extends Phaser.Scene {
             frameRate: 20,
             repeat: -1 // zapętlenie w nieskończoność
         });
+
+        // Animacje gracza - idąc w lewo
+        this.anims.create({
+            key: 'left',
+            frames: [
+                { key: 'standing1l' },
+                { key: 'standing2l' }
+            ],
+            frameRate: 4,
+            repeat: -1
+        });
+
+        // Animacje gracza - idąc w prawo
+        this.anims.create({
+            key: 'right',
+            frames: [
+                { key: 'standing1r' },
+                { key: 'standing2r' }
+            ],
+            frameRate: 4,
+            repeat: -1
+        });
     }
 
 
@@ -178,13 +207,14 @@ export default class GameScene extends Phaser.Scene {
 
 
         //kolizje scian
-        wallsLayer.setCollisionByExclusion([-1]);       
+        wallsLayer.setCollisionByExclusion([-1]);
 
         // Warstwa obiektów: Spawns
         const spawnLayer = map.getObjectLayer("spawnPoints");
 
         //Osobno nasz lokalny gracz a osobno reszta otrzyjmuje polozenie.
         let spawntag = this.players[this.playerId].spawn;
+        //TODO: czy to jest uzywane???
         let spawnPoint = spawnLayer.objects.find(obj => obj.name === spawntag);
 
         this.playerGroup = this.physics.add.group()
@@ -192,51 +222,53 @@ export default class GameScene extends Phaser.Scene {
 
         Object.values(this.players).forEach(ply => {
 
-                const spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
+            const spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
 
-                // Create main sprite
-                const sprite = this.add.sprite(0, 0, 'player');
+            // Create main sprite
+            const sprite = this.add.sprite(0, 0, 'standing1r');
 
-                // Create nickname text
-                const nickname = this.add.text(0, -56, ply.nick || "NICK", {
-                    fontSize: "16px",
-                    color: "#fff",
-                    stroke: "#000",
-                    strokeThickness: 3
-                }).setOrigin(0.5);
+            // Create nickname text
+            const nickname = this.add.text(0, -56, ply.nick || "NICK", {
+                fontSize: "16px",
+                color: "#fff",
+                stroke: "#000",
+                strokeThickness: 3
+            }).setOrigin(0.5);
 
-                const hp_bar = this.add.text(0, -40, ply.health + " HP", {
-                    fontSize: "16px",
-                    color: "#47c070ff",
-                    stroke: "#000",
-                    strokeThickness: 4
-                }).setOrigin(0.5);
+            const hp_bar = this.add.text(0, -40, ply.health + " HP", {
+                fontSize: "16px",
+                color: "#47c070ff",
+                stroke: "#000",
+                strokeThickness: 4
+            }).setOrigin(0.5);
 
-                hp_bar.name = this.HP_BAR_TAG;
+            hp_bar.name = this.HP_BAR_TAG;
 
-                // Put sprite + text into a container
-                const player = this.add.container(spawnPoint.x, spawnPoint.y, [sprite, nickname, hp_bar]);
+            // Put sprite + text into a container
+            const player = this.add.container(spawnPoint.x, spawnPoint.y, [sprite, nickname, hp_bar]);
+            
+            // Enable physics on the container
+            this.physics.world.enable(player);
 
-                // Enable physics on the container
-                this.physics.world.enable(player);
+            // Ustaw konkretny rozmiar hitboxa gracza
+            player.body.setSize(16, 16); // Hitbox 16x16 pikseli
+            player.body.setOffset(-8, 10); // Wyśrodkuj hitbox
 
-                // Adjust body size to match sprite
-                player.body.setSize(sprite.width, sprite.height);
-                player.body.setOffset(-sprite.width / 2, -sprite.height / 2);
+            // Add collisions
+            this.physics.add.collider(player, wallsLayer);
 
-                // Add collisions
-                this.physics.add.collider(player, wallsLayer);
+            // Add to player group
+            this.playerGroup.add(player);
 
-                // Add to player group
-                this.playerGroup.add(player);
+            // Assign ID for later lookup
+            player.name = ply.id;
+            player.hp_bar = hp_bar;
+            player.spriteBody = sprite;
+            if (ply.id == this.playerId) {
+                this.player = player;
+            }
 
-                // Assign ID for later lookup
-                player.name = ply.id;
-                player.hp_bar = hp_bar;
-                player.spriteBody = sprite;
-                if(ply.id == this.playerId){
-                    this.player = player;
-                }
+            player.spriteBody.play(ply.currentDirection, true);
         });
 
         // aktualnie nieużywane
@@ -352,6 +384,18 @@ export default class GameScene extends Phaser.Scene {
                 // console.log(ply, players);
                 playerContainer.hp_bar.setText(ply.health + "HP");
 
+                const direction = ply.currentDirection || "right"; // domyślnie w prawo
+                if (direction === "left") {
+                    playerContainer.spriteBody.play('left', true);
+                } else if (direction === "right") {
+                    playerContainer.spriteBody.play('right', true);
+                }
+                //  else if (direction === "up") {
+                //     playerContainer.spriteBody.setFlipX(false);
+                // } else if (direction === "down") {
+                //     playerContainer.spriteBody.setFlipX(false);
+                // }
+
                 //jesli to jest nasz gracz
                 if (ply.id == this.playerId) {
                     //TODO: to gowno
@@ -398,22 +442,22 @@ export default class GameScene extends Phaser.Scene {
 
 
 
-    sendUpdate() {
-        this.socket.emit('moved', { id: this.playerId, x: this.player.x, y: this.player.y })
+    sendUpdate(direction) {
+        this.socket.emit('moved', { id: this.playerId, x: this.player.x, y: this.player.y, direction: direction })
     }
 
     newBomb(bomb) {
         // Stwórz sprite bomby z pierwszą klatką animacji
         const bombSprite = this.physics.add.sprite(bomb.x + 32, bomb.y + 32, "bomba1");
         this.bombGroup.add(bombSprite);
-        
+
         // Odtwórz animację bomby
         bombSprite.play('bomba-animation');
-        
-        setTimeout(() => { 
+
+        setTimeout(() => {
             // Zatrzymaj animację przed usunięciem
             bombSprite.stop();
-            bombSprite.destroy(); 
+            bombSprite.destroy();
         }, bomb.timeout);
     }
 
@@ -424,9 +468,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     update() {
+        let direction = null;
         // Jeśli gracz nie żyje, nie pozwól mu się ruszać
         if (this.isDead) return;
-        
+
         // Sterowanie z historią wciśniętych klawiszy
         const cursors = this.input.keyboard.createCursorKeys();
 
@@ -464,23 +509,27 @@ export default class GameScene extends Phaser.Scene {
         }
 
 
-        this.player.body.setVelocity(0,0);
+        this.player.body.setVelocity(0, 0);
 
         // Użyj ostatniego klawisza ze stosu (najnowszy wciśnięty)
         const currentKey = this.keyStack[this.keyStack.length - 1];
 
         if (currentKey === 'left') {
             this.player.body.setVelocityX(-this.speed);
+            direction = 'left';
         } else if (currentKey === 'right') {
             this.player.body.setVelocityX(this.speed);
+            direction = 'right';
         } else if (currentKey === 'up') {
             this.player.body.setVelocityY(-this.speed);
+            direction = 'up';
         } else if (currentKey === 'down') {
             this.player.body.setVelocityY(this.speed);
+            direction = 'down';
         }
 
         if (this.player.body.velocity.length() > 0) {
-            this.sendUpdate()
+            this.sendUpdate(direction);
         }
 
         if (cursors.space.isDown) {
