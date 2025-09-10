@@ -21,6 +21,7 @@ const SPEED_DURATION = 5 * 1000;
 const SLOW_DURATION = 10 * 1000;
 const MAX_CHARGES = 3;
 const MAX_HP =4;
+const BONUS_CHARGES = 2;
 let currentActivePowerups = 0;
 let mapName = "";
 let mapHeight = 0;
@@ -221,7 +222,7 @@ io.on("connection", (socket) => {
             //bonus charges:
             case 2:
                 players[id].powerups[type] = true;
-                players[id].bonusCharges = Math.min(players[id].bonusCharges + 1, MAX_CHARGES);
+                players[id].bonusCharges = Math.min(players[id].bonusCharges + BONUS_CHARGES, MAX_CHARGES);
                 break;
 
             //HP
