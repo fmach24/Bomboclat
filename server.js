@@ -108,10 +108,7 @@ io.on("connection", (socket) => {
             mapPreferences[playerId] = data.preferredMap;
         }
 
-        console.log("User connected:", socket.id);
-        console.log("Current sockets:", sockets);
-        console.log("Map preferences:", mapPreferences);
-        console.log("Skin:", data.playerSkin);
+
         //TODO: gdy gra sie zacznie i osobna wyjdzie z gry i dolaczy znowu, to zacznie nowa gre wtedy, moze zrobic tak, że sockets beda usuwane po rozpoczaciu gry?
         //gdy jest 4 graczy
         if (Object.keys(sockets).length === REQUIRED_PLAYERS) {
@@ -124,7 +121,7 @@ io.on("connection", (socket) => {
                 mapName = "beach"; // Fallback jeśli brak preferencji
             }
 
-            console.log("Selected map:", mapName);
+
 
             //tmp assign some start positions.
             let i = 1;
@@ -175,15 +172,9 @@ io.on("connection", (socket) => {
                         map[y][x].powerup = true;
                         currentActivePowerups++;
                         io.emit('spawnPowerup', { x, y, type: type });
-                        console.log("POWERUP:", x, y);
-                        console.log("TYPE:", type);
                         break;
-                    } else {
-                        console.log("zajete miejsce");
-                    }
+                    } 
 
-                    console.log("POWERUP:", x, y);
-                    console.log("TYPE:", type);
                 }
             }, 5000); // co 10 sekund
         }
@@ -270,25 +261,7 @@ io.on("connection", (socket) => {
     });
 
 
-    socket.on("reconnect", (id)=>{
 
-        const exists = Object.values(sockets).find(x => x.id === id) !== undefined;
-        if(!exists){
-            socket.emit({reconnectSuccess:false});
-            return;
-        }
-        sockets[socket.id] = {nick:"reconnect", id:id};
-        
-        const data = {
-            mapName:mapName,
-            players:players,
-            playerId : id,
-            socket: socket,
-            reconnectSuccess: true
-        }
-        console.log("SEND RECONNECT!");
-        socket.emit("reconnectionData",data);
-    })
 
 
 
