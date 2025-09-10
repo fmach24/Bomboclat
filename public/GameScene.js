@@ -41,23 +41,28 @@ export default class GameScene extends Phaser.Scene {
         for (let i = 1; i <= 12; i++) {
             this.load.image(`bomba${i}`, `assets/animations/bomba${i}.png`);
         }
+ 
+        for (let i = 1; i <= 8; i++) {
+            this.load.image(`explosion${i}`, `assets/animations/wybuchbomby${i}.png`);
+        }
 
         // Animacje gracza - lewo/prawo
         this.load.image('standing1l', 'assets/animations/standing1l.png');
         this.load.image('standing2l', 'assets/animations/standing2l.png');
         this.load.image('standing1r', 'assets/animations/standing1r.png');
         this.load.image('standing2r', 'assets/animations/standing2r.png');
+        this.load.spritesheet('bomb-explosion','assets/animations/bomb-explosion.png', {frameWidth:16, frameHeight:16});
 
-        //breakables
-        // this.load.spritesheet("breakable1x1", "assets/breakable1x1.png", {
-        //     frameWidth: 64,
-        //     frameHeight: 64
-        // });
-        // this.load.spritesheet("breakable2x1", "assets/breakable2x1.png", {
-        //     frameWidth: 128,
-        //     frameHeight: 64
-        // });
-        // sprite bomby - usunięte, używamy animacji
+        
+
+        this.load.image('slow-indic', 'assets/slow_indic.png');
+        this.load.image('speed-indic', 'assets/speed_indic.png');
+        this.load.spritesheet('heart-idle', 'assets/animations/heart-spritesheet.png', {frameWidth:32,frameHeight:32});
+        this.load.image('heart1', 'assets/animations/heart1.png');
+
+        this.load.image('slow-indic', 'assets/slow_indic.png');
+        this.load.image('speed-indic', 'assets/speed_indic.png');
+
     }
 
 
@@ -92,6 +97,8 @@ export default class GameScene extends Phaser.Scene {
         this.socket.on('update', (data) => { this.updatePlayers(data); });
 
         this.socket.on('newBomb', (data) => { this.newBomb(data); });
+
+        this.socket.on('explosionDetails', (data)=>{this.animateExplosion(data);})
 
     }
 
@@ -144,6 +151,16 @@ export default class GameScene extends Phaser.Scene {
             repeat: -1 // zapętlenie w nieskończoność
         });
 
+        const explosionFrames=[];
+        for(let i =1; i<= 8; i++){
+            explosionFrames.push({key:`explosion${i}`});
+        }
+        this.anims.create({
+            key:'bomb-explode',
+            frames: explosionFrames,
+            frameRate:4,
+            repeat:0
+        });
         // Animacje gracza - idąc w lewo
         this.anims.create({
             key: 'left',
@@ -165,6 +182,14 @@ export default class GameScene extends Phaser.Scene {
             frameRate: 4,
             repeat: -1
         });
+
+
+        this.anims.create({
+            key:'heart-idle', 
+            frames:this.anims.generateFrameNames('heart-idle', {start:0, end:4}),
+            frameRate:10,
+            repeat:-1
+        });
     }
 
 
@@ -181,17 +206,17 @@ export default class GameScene extends Phaser.Scene {
         const wallsLayer = map.createLayer("wallsLayer", tileset, 0, 0);
 
         //tworzenie mapArray ktory zostanie wyslany do servera
-        const mapHeight = map.height;
-        console.log("Map height in tiles:", mapHeight);
-        const mapWidth = map.width;
+        this.mapHeight = map.height;
+        console.log("Map height in tiles:", this.mapHeight);
+        this.mapWidth = map.width;
         //tworzenie mapy
-        const mapArray = Array.from({ length: mapHeight }, () =>
-            Array.from({ length: mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
+        const mapArray = Array.from({ length: this.mapHeight }, () =>
+            Array.from({ length: this.mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
         );
 
         // Sprawdź każdy kafelek w wallsLayer i ustaw wall = true jeśli kafelek istnieje
-        for (let y = 0; y < mapHeight; y++) {
-            for (let x = 0; x < mapWidth; x++) {
+        for (let y = 0; y < this.mapHeight; y++) {
+            for (let x = 0; x < this.mapWidth; x++) {
                 const tile = wallsLayer.getTileAt(x, y);
                 if (tile !== null) {
                     mapArray[y][x].wall = true;
@@ -226,7 +251,12 @@ export default class GameScene extends Phaser.Scene {
 
             // Create main sprite
             const sprite = this.add.sprite(0, 0, 'standing1r');
-
+            
+            const speedIndicatorSprite = this.add.sprite(0,20, 'speed-indic');
+            const slowIndicatorSprite = this.add.sprite(0,20, 'slow-indic');
+            
+            speedIndicatorSprite.setVisible(false);
+            slowIndicatorSprite.setVisible(false);
             // Create nickname text
             const nickname = this.add.text(0, -56, ply.nick || "NICK", {
                 fontSize: "16px",
@@ -245,7 +275,7 @@ export default class GameScene extends Phaser.Scene {
             hp_bar.name = this.HP_BAR_TAG;
 
             // Put sprite + text into a container
-            const player = this.add.container(spawnPoint.x, spawnPoint.y, [sprite, nickname, hp_bar]);
+            const player = this.add.container(spawnPoint.x, spawnPoint.y, [speedIndicatorSprite, slowIndicatorSprite,sprite, nickname, hp_bar ]);
             
             // Enable physics on the container
             this.physics.world.enable(player);
@@ -264,6 +294,8 @@ export default class GameScene extends Phaser.Scene {
             player.name = ply.id;
             player.hp_bar = hp_bar;
             player.spriteBody = sprite;
+            player.speedIndicator = speedIndicatorSprite;
+            player.slowIndicator = slowIndicatorSprite;
             if (ply.id == this.playerId) {
                 this.player = player;
             }
@@ -271,31 +303,6 @@ export default class GameScene extends Phaser.Scene {
             player.spriteBody.play(ply.currentDirection, true);
         });
 
-        // aktualnie nieużywane
-        // spawning breakable walls
-        // const breakableLayer = map.getObjectLayer("breakableSpawns");
-        // const breakable1x1 = breakableLayer.objects.filter(obj => obj.type === "breakable1x1");
-        // const breakable2x1 = breakableLayer.objects.filter(obj => obj.type === "breakable2x1");
-
-        // this.breakablesGroup = this.physics.add.staticGroup();
-
-        // for (let obj of breakable1x1) {
-        //     const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable1x1");
-        //     wall.setData("hp", null); // przykładowe HP
-        //     wall.setData("x", obj.x);
-        //     wall.setData("y", obj.y);
-        //     this.breakablesGroup.add(wall);
-        // }
-
-        // for (let obj of breakable2x1) {
-        //     const wall = this.breakablesGroup.create(obj.x, obj.y, "breakable2x1");
-        //     wall.setData("hp", null); // przykładowe HP
-        //     wall.setData("x", obj.x);
-        //     wall.setData("y", obj.y);
-        //     this.breakablesGroup.add(wall);
-        // }
-
-        // this.physics.add.collider(this.player, this.breakablesGroup);
 
         // Kamera podąża za graczem
         this.cameras.main.startFollow(this.player);
@@ -310,6 +317,7 @@ export default class GameScene extends Phaser.Scene {
         this.socket.emit('mapCreated', { mapArray: mapArray });
     }
 
+
     //NETWORK:
 
     //proceeds powerup spawn (received from server)
@@ -321,14 +329,16 @@ export default class GameScene extends Phaser.Scene {
         const animationKeys = {
             0: 'speed-animation',
             1: 'mikstura-animation',
-            2: 'szczupas-animation'
+            2: 'szczupas-animation',
+            3: 'heart-idle'
         };
 
         // Mapowanie typów na pierwszy frame (do wyświetlenia przed animacją)
         const firstFrameKeys = {
             0: 'speed1',
             1: 'mikstura1',
-            2: 'szczups1'
+            2: 'szczups1',
+            3: 'heart1'
         };
 
         const animationKey = animationKeys[type];
@@ -353,6 +363,23 @@ export default class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, powerup, (player, powerup) => {
             this.socket.emit('pickedPowerup', { id: this.playerId, x: powerup.getData('x'), y: powerup.getData('y'), type: powerup.getData('type') });
             // powerup.destroy(); // usuń powerupa z mapy
+            const offsetX = Phaser.Math.Between(-20, 20);
+
+            switch(type){
+                case 0:
+                    this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "Speed Effect", "#fbf236");
+                    break;
+                case 1:
+                    this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "Slow Effect", "#639bff");
+                    break;
+                case 2:
+                    this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "+3 Bombs", "#d77bba");
+                    break;
+                case 3:
+                    this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "+1 Health", "#6abe30");
+                    break;
+            }
+            
         });
     }
 
@@ -380,10 +407,6 @@ export default class GameScene extends Phaser.Scene {
             if (playerContainer && (ply.x != null) && (ply.y != null)) {
                 // console.log(players)
 
-
-                // console.log(ply, players);
-                playerContainer.hp_bar.setText(ply.health + "HP");
-
                 const direction = ply.currentDirection || "right"; // domyślnie w prawo
                 if (direction === "left") {
                     playerContainer.spriteBody.play('left', true);
@@ -395,21 +418,23 @@ export default class GameScene extends Phaser.Scene {
                 // } else if (direction === "down") {
                 //     playerContainer.spriteBody.setFlipX(false);
                 // }
-
+                const hasSpeedEffect = ply.speedEffectStamp >= Date.now();
+                const hasSlowEffect = ply.slowEffectStamp >= Date.now();
                 //jesli to jest nasz gracz
                 if (ply.id == this.playerId) {
-                    //TODO: to gowno
-                    this.player.hp_bar.setText(ply.health + " HP");
-                    console.log(ply.nick, ply.health);
 
                     // Domyślna prędkość
                     // this.speed = 300;
-                    if (ply.powerups[0]) {
-                        this.speed = 300; // Powerup SPEED
+                    if (hasSpeedEffect) {
+                        this.speed = 200; // Powerup SPEED
+                    }
+                    else if(hasSlowEffect){
+                        this.speed = 75; //powerup slow
                     }
                     else {
                         this.speed = 150; // Brak powerupu SPEED
                     }
+
                     //gracz ma 0hp
                     if (ply.health <= 0) {
                         this.isDead = true; // Ustaw flagę że gracz umarł
@@ -423,8 +448,7 @@ export default class GameScene extends Phaser.Scene {
                 else {
 
                     playerContainer.setPosition(ply.x, ply.y);
-                    playerContainer.hp_bar.setText(ply.health + " HP");
-                    console.log(ply.nick, ply.health);
+
 
                     //gracz ma 0hp
                     if (ply.health <= 0) {
@@ -434,6 +458,10 @@ export default class GameScene extends Phaser.Scene {
                         // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
                     }
                 }
+
+                playerContainer.hp_bar.setText(ply.health + " HP");
+                playerContainer.slowIndicator.setVisible(hasSlowEffect);
+                playerContainer.speedIndicator.setVisible(hasSpeedEffect);
             }
 
 
@@ -535,6 +563,46 @@ export default class GameScene extends Phaser.Scene {
         if (cursors.space.isDown) {
             this.plantBomb();
         }
+    }
+
+    animateExplosion(area) {
+        
+        for (let y = 0; y < this.mapHeight; y++) {
+            for (let x = 0; x < this.mapWidth; x++) {
+                if (area[y][x]) {
+                    const effect = this.add.sprite(y * 64 + 32, x * 64 + 32, 'explosion1');
+                 
+                    effect.play('bomb-explode');
+                    effect.on('animationcomplete', () => {
+                        effect.stop();
+                        
+                    });
+
+                }
+            }
+
+        }
+    }
+
+    showFloatingText(x, y, text, color = "#fff") {
+        const floatingText = this.add.text(x, y, text, {
+            fontSize: "16px",
+            color: color,
+            stroke: "#000",
+            strokeThickness: 3
+        }).setOrigin(0.5);
+
+        // Animacja: przesunięcie w górę + fade out
+        this.tweens.add({
+            targets: floatingText,
+            y: y - 40,        // przesuń w górę
+            alpha: 0,         // znikanie
+            duration: 1500,   // czas w ms
+            ease: "Cubic.easeOut",
+            onComplete: () => {
+                floatingText.destroy(); // usuń po animacji
+            }
+        });
     }
 
     showDeathOverlay() {
