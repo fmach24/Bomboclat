@@ -309,7 +309,9 @@ io.on("connection", (socket) => {
 
         const detonateBomb = (gridX, gridY, bomb) => {
             // TODO: TUTAJ jest hardcoded xy mapy, teraz jest zdefiniowane wyzej przy tworzeniu mapy, ale nie zmieniam tu bo nw czy sie nie rozjebie cos
-
+            console.log("Detonating bomb at:", gridX, gridY, bomb);
+            console.log("Map dimensions:", mapWidth, mapHeight);
+            console.log("Map state:", map);
 
             let x_offset, y_offset;
             const affectedArea = Array.from({ length: mapHeight }, () =>
