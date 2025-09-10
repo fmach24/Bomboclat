@@ -24,9 +24,9 @@ export default class LobbyScene extends Phaser.Scene {
 
     preload() {
         // Załaduj miniaturki map do podglądu
-        this.load.image('beachPreview', 'assets/beachTiles.png');
+        this.load.image('beachPreview', 'assets/beachMapPreview.png');
         this.load.image('forestPreview', 'assets/forestTiles.png');
-        this.load.image('portugalPreview', 'assets/portugalTiles.png');
+        this.load.image('portugalPreview', 'assets/portugalMapPreview.png');
 
         // Załaduj podglądy skinów gracza
         this.load.image('bombardinhoPreview', 'assets/animations/bombardinho_down1.png');

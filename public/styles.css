@@ -28,10 +28,21 @@ body {
   padding: 20px;
 }
 
+/* Layout for powerups on left and game on right */
+.game-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  justify-content: center;
+  width: 100%;
+  max-width: 1400px; /* maksymalna szerokość całego układu */
+  margin: 0 auto; /* wycentrowanie całego układu */
+}
+
 #game-container {
-  width: 800px;
-  height: 600px;
-  background: #111;
+  width: 832px;
+  height: 570px;
+  background: #0b0b0b;
   border: 2px solid #444;
   border-radius: 6px;
   overflow: hidden;
@@ -59,13 +70,75 @@ li{
     align-items: center;
 }
 .powerup-preview-side-menu{
-    width: 800px;           /* match game width */
+    width: 300px;           /* fixed width for side panel */
     padding: 6px 14px;
     font-size: 18px;
     text-align: left;
     background: #0b0b0b;
     border: 2px solid #444;
     border-radius: 6px;
+}
+
+/* Niewidzialny kontener po prawej - taka sama szerokość jak lewy */
+.invisible-spacer {
+    width: 300px;           /* taka sama szerokość jak powerup kontener */
+    visibility: hidden;     /* niewidzialny ale zajmuje miejsce */
+}
+
+/* Kontener z informacjami o sterowaniu */
+.controls-info {
+    width: 300px;           /* taka sama szerokość jak powerup kontener */
+    padding: 6px 14px;
+    font-size: 18px;
+    text-align: left;
+    background: #0b0b0b;
+    border: 2px solid #444;
+    border-radius: 6px;
+}
+
+.controls-info .title {
+  display: block;
+  font-size: 26px;
+  text-align: center;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  color: #ffffff;
+}
+
+.controls-info ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: start;
+  padding: 0;
+  margin: 0;
+}
+
+.controls-info li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.controls-info .control-key {
+  background: #333;
+  border: 1px solid #666;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: 'Jersey 10', monospace;
+  font-size: 16px;
+  color: #ffffff;
+  min-width: 80px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.controls-info span:not(.control-key) {
+  line-height: 1.2;
+  color: #ffffff;
+  flex-grow: 1;
 }
 
 .powerup-preview-side-menu .title {
@@ -78,9 +151,9 @@ li{
 
 .powerup-preview-side-menu ul {
   list-style: none;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 18px;
+  display: flex;
+  flex-direction: column;  /* Stack powerups vertically */
+  gap: 10px;
   align-items: start;
 }
 

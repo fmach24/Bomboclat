@@ -507,8 +507,8 @@ export default class GameScene extends Phaser.Scene {
 
 
         // Kamera podąża za graczem
-        this.cameras.main.startFollow(this.player);
-        this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+        // this.cameras.main.startFollow(this.player);
+        // this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     
         this.powerups = this.physics.add.group();
@@ -959,8 +959,6 @@ export default class GameScene extends Phaser.Scene {
                 fontFamily: 'jersey',
                 fontSize: "100px",
                 color: "#ff0000",
-                stroke: "#000",
-                strokeThickness: 3
             }
         );
         title.setOrigin(0.5);

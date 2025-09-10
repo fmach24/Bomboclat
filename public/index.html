@@ -18,13 +18,14 @@
 <body>
   <div class="container">
     <div style="text-align: center;"><img src="/assets/logo-smaller.png"/></div>
-    
-    <div id="game-container" style="width: 800; height: 600;"></div>
-    <div class="powerup-preview-side-menu">
-      <span style="font-size: 30px;" class="title">
-        Powerups
-      </span>
-      
+
+    <div class="game-layout">
+      <!-- Lewy kontener z powerupami -->
+      <div class="powerup-preview-side-menu">
+        <span style="font-size: 30px;" class="title">
+          Powerups
+        </span>
+        
 <ul>
   <li>
     <img src="/assets/animations/speed1.png"/>
@@ -44,6 +45,29 @@
   </li>
 </ul>
 
+      </div>
+
+      <!-- Kontener z grą -->
+      <div id="game-container"></div>
+
+      <!-- Prawy kontener z informacjami o sterowaniu -->
+      <div class="controls-info">
+        <span style="font-size: 30px;" class="title">
+          Controls
+        </span>
+        
+<ul>
+  <li>
+    <span class="control-key">↑ ↓ ← →</span>
+    <span>Movement</span>
+  </li>
+  <li>
+    <span class="control-key">SPACE</span>
+    <span>Place bomb</span>
+  </li>
+</ul>
+
+      </div>
     </div>
 
   </div>
