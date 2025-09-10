@@ -1,6 +1,5 @@
 
 const socket = io();
-
 export default class LobbyScene extends Phaser.Scene {
     constructor() {
         super('LobbyScene');
@@ -45,6 +44,13 @@ export default class LobbyScene extends Phaser.Scene {
     }
 
     create() {
+
+        const revivedData = localStorage.getItem("reconnectionData");
+        if(revivedData!= null){
+            this.scene.start('GameScene', {reconnect:true, socket:socket});
+            return;
+        }
+
         // Czarne tło
         this.add.rectangle(400, 300, 800, 600, 0x0b0b0b);
 
@@ -227,7 +233,8 @@ export default class LobbyScene extends Phaser.Scene {
 
         socket.on("startGame", (sockets, players, mapName) => {
             const playerId = sockets[socket.id].id;
-            const gameData = { players: players, playerId: playerId, socket: socket, mapName: mapName };
+            const gameData = { players: players, playerId: playerId, socket: socket, mapName: mapName, reconnect:false };
+            localStorage.setItem("playerId", playerId);
             this.startCountdown(gameData);
         });
     }
