@@ -870,13 +870,13 @@ export default class GameScene extends Phaser.Scene {
     }
 
     animateExplosion(area, map) {
-        console.log(JSON.stringify(area, null, 2));
-        console.log(JSON.stringify(map, null, 2));
-
-        for (let y = 0; y < this.mapHeight; y++) {
-            for (let x = 0; x < this.mapWidth; x++) {
+        console.log(area.slice(0,10));
+        console.log(this.mapWidth);
+        console.log(this.mapHeight);
+        for (let y = 0; y < 20; y++) {
+            for (let x = 0; x < 20; x++) {
                 if (area[y][x]) {
-                    const effect = this.add.sprite(y * 64 + 32, x * 64 + 32, 'explosion1');
+                    const effect = this.add.sprite(x * 64 + 32, y * 64 + 32, 'explosion1');
 
                     effect.play('bomb-explode');
                     effect.on('animationcomplete', () => {
