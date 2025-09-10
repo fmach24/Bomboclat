@@ -76,6 +76,9 @@ export default class GameScene extends Phaser.Scene {
         this.socket = data.socket;
         this.speed = 300;
         this.map = null;
+        //TODO: skiny
+        this.skin = data.players[this.playerId].skin || "default";
+        console.log("Player skin:", this.skin);
         this.isDead = false; // Flaga czy gracz już umarł
 
         // Tworzenie animacji powerupów i gracza
