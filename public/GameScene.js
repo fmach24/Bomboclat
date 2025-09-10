@@ -455,7 +455,7 @@ export default class GameScene extends Phaser.Scene {
         let spawnPoint2 = spawnLayer.objects.find(obj => obj.name === spawntag);
 
         this.playerGroup = this.physics.add.group()
-
+        
 
         Object.values(this.players).forEach(ply => {
 
@@ -534,7 +534,7 @@ export default class GameScene extends Phaser.Scene {
         // this.cameras.main.startFollow(this.player);
         // this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
-
+        this.physics.add.collider(this.player.body,this.bombGroup);
         this.powerups = this.physics.add.group();
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
 
@@ -803,7 +803,6 @@ export default class GameScene extends Phaser.Scene {
         // Stwórz sprite bomby z pierwszą klatką animacji
         const bombSprite = this.physics.add.staticSprite(bomb.x + 32, bomb.y + 32, "bomba1");
         this.bombGroup.add(bombSprite);
-        this.physics.add.collider(this.player.body,this.bombGroup);
         // Odtwórz animację bomby
         bombSprite.play('bomba-animation');
 
