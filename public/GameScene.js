@@ -158,7 +158,7 @@ export default class GameScene extends Phaser.Scene {
         this.anims.create({
             key:'bomb-explode',
             frames: explosionFrames,
-            frameRate:4,
+            frameRate:10,
             repeat:0
         });
         // Animacje gracza - idąc w lewo
@@ -574,8 +574,7 @@ export default class GameScene extends Phaser.Scene {
                  
                     effect.play('bomb-explode');
                     effect.on('animationcomplete', () => {
-                        effect.stop();
-                        
+                        effect.destroy();
                     });
 
                 }
