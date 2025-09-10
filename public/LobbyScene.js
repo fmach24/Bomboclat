@@ -49,7 +49,7 @@ export default class LobbyScene extends Phaser.Scene {
     create() {
 
         const revivedData = localStorage.getItem("reconnectionData");
-        if(revivedData!= null && TRY_RECONNECT){
+        if(revivedData!= null && this.TRY_RECONNECT_RECONNECT){
             this.scene.start('GameScene', {reconnect:true, socket:socket});
             return;
         }

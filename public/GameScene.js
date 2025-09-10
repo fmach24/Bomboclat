@@ -538,7 +538,7 @@ export default class GameScene extends Phaser.Scene {
         this.powerups = this.physics.add.group();
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
 
-        this.bombGroup = this.physics.add.group();
+        this.bombGroup = this.physics.add.staticGroup();
 
         this.socket.emit('mapCreated', { mapArray: mapArray });
 
@@ -801,9 +801,9 @@ export default class GameScene extends Phaser.Scene {
 
     newBomb(bomb) {
         // Stwórz sprite bomby z pierwszą klatką animacji
-        const bombSprite = this.physics.add.sprite(bomb.x + 32, bomb.y + 32, "bomba1");
+        const bombSprite = this.physics.add.staticSprite(bomb.x + 32, bomb.y + 32, "bomba1");
         this.bombGroup.add(bombSprite);
-
+        this.physics.add.collider(this.player.body,this.bombGroup);
         // Odtwórz animację bomby
         bombSprite.play('bomba-animation');
 
