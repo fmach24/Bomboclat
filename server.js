@@ -336,9 +336,9 @@ io.on("connection", (socket) => {
 
 
         const detonateBomb = (row, col, bomb) => {
-            console.log("Detonating bomb at:", row, col, bomb);
-            console.log("Map dimensions:", mapHeight, mapWidth);
-            console.log("Map state:", map);
+            // console.log("Detonating bomb at:", row, col, bomb);
+            // console.log("Map dimensions:", mapHeight, mapWidth);
+            // console.log("Map state:", map);
 
             let playersHit = [];
 
@@ -445,7 +445,7 @@ io.on("connection", (socket) => {
             io.emit("newBomb", bomb);
         }
         else{
-            console.log("huh");
+            // console.log("huh");
 
         }
     })

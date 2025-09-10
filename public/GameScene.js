@@ -521,8 +521,8 @@ export default class GameScene extends Phaser.Scene {
             this.physics.world.enable(player);
 
             // Ustaw konkretny rozmiar hitboxa gracza
-            player.body.setSize(32, 48); 
-            player.body.setOffset(-16, -24); 
+            player.body.setSize(32, 40); 
+            player.body.setOffset(-16, -8); 
 
             // Add collisions
             this.physics.add.collider(player, wallsLayer);
