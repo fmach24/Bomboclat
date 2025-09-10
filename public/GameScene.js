@@ -539,6 +539,9 @@ export default class GameScene extends Phaser.Scene {
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
 
         this.bombGroup = this.physics.add.group();
+        
+        // Dodaj kolizję między wszystkimi graczami a wszystkimi bombami
+        this.physics.add.collider(this.playerGroup, this.bombGroup);
 
         this.socket.emit('mapCreated', { mapArray: mapArray });
 
@@ -802,6 +805,10 @@ export default class GameScene extends Phaser.Scene {
     newBomb(bomb) {
         // Stwórz sprite bomby z pierwszą klatką animacji
         const bombSprite = this.physics.add.sprite(bomb.x + 32, bomb.y + 32, "bomba1");
+        
+        // Ustaw bombę jako nieporuszalny obiekt
+        bombSprite.body.setImmovable(true);
+        
         this.bombGroup.add(bombSprite);
 
         // Odtwórz animację bomby
