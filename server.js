@@ -17,7 +17,10 @@ const STANDARD_RANGE = 2;
 const BUFFED_RANGE = 4;
 const HP_MAX = 3;
 const MAX_ACTIVE_POWERUPS = 5;
-
+const SPEED_DURATION = 5 * 1000;
+const SLOW_DURATION = 10 * 1000;
+const MAX_CHARGES = 3;
+const MAX_HP =4;
 let currentActivePowerups = 0;
 let mapName = "";
 let mapHeight = 0;
@@ -200,7 +203,7 @@ io.on("connection", (socket) => {
             //speed
             case 0:
                 players[id].powerups[type] = true; // przyznaj powerup graczowi
-                players[id].speedEffectStamp = Date.now() + 10 * 1000;
+                players[id].speedEffectStamp = Date.now() + SPEED_DURATION;
                 break;
 
             //slow
@@ -209,7 +212,7 @@ io.on("connection", (socket) => {
                     //give everyone else the slow!
                     if (ply.id != id) {
                         ply.powerups[type] = true; // przyznaj powerup graczowi
-                        ply.slowEffectStamp = Date.now() + 10 * 1000;
+                        ply.slowEffectStamp = Date.now() + SLOW_DURATION;
                     }
                 });
 
@@ -218,13 +221,13 @@ io.on("connection", (socket) => {
             //bonus charges:
             case 2:
                 players[id].powerups[type] = true;
-                players[id].bonusCharges += 3;
+                players[id].bonusCharges = Math.min(players[id].bonusCharges + 1, MAX_CHARGES);
                 break;
 
             //HP
             case 3:
                 players[id].powerups[type] = true;
-                players[id].health++;
+                players[id].health = Math.min(players[id].health + 1, MAX_HP);
                 break;
         }
         currentActivePowerups--;
