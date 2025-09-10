@@ -1,6 +1,9 @@
 
 const socket = io();
 export default class LobbyScene extends Phaser.Scene {
+
+    TRY_RECONNECT = false;
+
     constructor() {
         super('LobbyScene');
         this.playersList = null;
@@ -46,7 +49,7 @@ export default class LobbyScene extends Phaser.Scene {
     create() {
 
         const revivedData = localStorage.getItem("reconnectionData");
-        if(revivedData!= null){
+        if(revivedData!= null && TRY_RECONNECT){
             this.scene.start('GameScene', {reconnect:true, socket:socket});
             return;
         }
