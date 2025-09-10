@@ -102,28 +102,28 @@ export default class GameScene extends Phaser.Scene {
     }
 
 
-        
+
 
 
 
     //start scene -> create
     create(data) {
 
-        
-    if (data.reconnect && this.TRY_RECONNECT) {
-        const revivedData = JSON.parse(localStorage.getItem("reconnectionData"));
-        revivedData.reconnect = true;
-        this.initializeGame(revivedData,data.socket)
-        console.log(revivedData);
-        
+
+        if (data.reconnect && this.TRY_RECONNECT) {
+            const revivedData = JSON.parse(localStorage.getItem("reconnectionData"));
+            revivedData.reconnect = true;
+            this.initializeGame(revivedData, data.socket)
+            console.log(revivedData);
+
+        }
+        else {
+            localStorage.setItem("reconnectionData", null);
+            this.initializeGame(data, data.socket);
+        }
     }
-    else{
-        localStorage.setItem("reconnectionData", null);
-        this.initializeGame(data, data.socket);
-    }
-}
-       
-    initializeGame(data,socket){
+
+    initializeGame(data, socket) {
 
         // alert(data.players);
         console.log(data);
@@ -500,8 +500,8 @@ export default class GameScene extends Phaser.Scene {
             this.physics.world.enable(player);
 
             // Ustaw konkretny rozmiar hitboxa gracza
-            player.body.setSize(32, 40); 
-            player.body.setOffset(-16, -8); 
+            player.body.setSize(32, 40);
+            player.body.setOffset(-16, -8);
 
             // Add collisions
             this.physics.add.collider(player, wallsLayer);
@@ -520,7 +520,7 @@ export default class GameScene extends Phaser.Scene {
             player.health = ply.health;
             if (ply.id == this.playerId) {
                 this.player = player;
-                if(data.reconnect){
+                if (data.reconnect) {
                     this.player.x = data.x
                     this.player.y = data.y
                 }
@@ -534,7 +534,7 @@ export default class GameScene extends Phaser.Scene {
         // this.cameras.main.startFollow(this.player);
         // this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
-    
+
         this.powerups = this.physics.add.group();
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
 
@@ -543,7 +543,7 @@ export default class GameScene extends Phaser.Scene {
         this.socket.emit('mapCreated', { mapArray: mapArray });
 
         //ADD BOMB COUNTER:
- 
+
         // Background for HUD
         let bg = this.add.image(0, 0, 'frame')
             .setOrigin(0, 0.5);
@@ -568,7 +568,7 @@ export default class GameScene extends Phaser.Scene {
 
         let hp_label = this.add.text(120, 0, this.player.health, {
             resolution: 30,
-            fontFamily: 'jersey',   
+            fontFamily: 'jersey',
             fontSize: "20px",
             color: "#000",
             stroke: "#fff",
@@ -580,7 +580,7 @@ export default class GameScene extends Phaser.Scene {
             .setScale(0.6)
             .setOrigin(0, 0.5);
 
-        const remainingSpeedTime = this.player.speedEffectStamp - Date.now() ;
+        const remainingSpeedTime = this.player.speedEffectStamp - Date.now();
         let speed_label = this.add.text(180, 0, remainingSpeedTime > 0 ? remainingSpeedTime : "-", {
             resolution: 30,
             fontFamily: 'jersey',
@@ -595,8 +595,8 @@ export default class GameScene extends Phaser.Scene {
             .setScale(0.6)
             .setOrigin(0, 0.5);
 
-        const remainingSlowTime = this.player.slowEffectStamp - Date.now() ;
-        let slow_label = this.add.text(260, 0,  remainingSlowTime > 0 ? remainingSlowTime : "-", {
+        const remainingSlowTime = this.player.slowEffectStamp - Date.now();
+        let slow_label = this.add.text(260, 0, remainingSlowTime > 0 ? remainingSlowTime : "-", {
             resolution: 30,
             fontFamily: 'jersey',
             fontSize: "20px",
@@ -765,10 +765,10 @@ export default class GameScene extends Phaser.Scene {
                     this.hp_label.setText(ply.health);
                     this.bomb_label.setText(ply.bonusCharges + (ply.hasPlantedBomb ? 0 : 1));
 
-                    const remainingSpeedTime = ply.speedEffectStamp - Date.now() ;
+                    const remainingSpeedTime = ply.speedEffectStamp - Date.now();
                     const remainingSlowTime = ply.slowEffectStamp - Date.now();
-                    this.speed_label.setText( remainingSpeedTime > 0 ? Math.ceil(remainingSpeedTime/1000) : "-");
-                    this.slow_label.setText(remainingSlowTime > 0 ? Math.ceil(remainingSlowTime/1000) : "-");
+                    this.speed_label.setText(remainingSpeedTime > 0 ? Math.ceil(remainingSpeedTime / 1000) : "-");
+                    this.slow_label.setText(remainingSlowTime > 0 ? Math.ceil(remainingSlowTime / 1000) : "-");
                 }
                 else {
 
@@ -894,7 +894,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     animateExplosion(area, map) {
-        console.log(area.slice(0,10));
+        console.log(area.slice(0, 10));
         console.log(this.mapWidth);
         console.log(this.mapHeight);
         for (let y = 0; y < 20; y++) {
@@ -910,7 +910,7 @@ export default class GameScene extends Phaser.Scene {
             }
         }
 
-        localStorage.setItem("reconnectionData", JSON.stringify({mapName:this.mapName, playerId:this.playerId, players: this.players, x:this.player.x, y:this.player.y}));
+        localStorage.setItem("reconnectionData", JSON.stringify({ mapName: this.mapName, playerId: this.playerId, players: this.players, x: this.player.x, y: this.player.y }));
 
         // Ensure countdown displays 0 before transitioning
         if (this.countdownText) {
