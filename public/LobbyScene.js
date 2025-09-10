@@ -40,11 +40,21 @@ export default class LobbyScene extends Phaser.Scene {
         this.load.image('forestTiles', 'assets/forestTiles.png');
         this.load.tilemapTiledJSON('portugalMap', 'assets/portugalMap.tmj');
         this.load.image('portugalTiles', 'assets/portugalTiles.png');   
+
+        this.load.font('jersey', 'assets/fonts/jersey10.ttf');
     }
 
     create() {
         // Czarne tło
         this.add.rectangle(400, 300, 800, 600, 0x0b0b0b);
+
+        // Napis "Nick" nad polem
+        this.add.text(400, 40, 'Nick:', {
+            resolution: 30,
+            fontFamily: 'jersey',
+            fontSize: '32px',
+            color: '#ffffff'
+        }).setOrigin(0.5);
 
         // Pole nicku - na górze
         // Pole nicku - na górze - jeszcze większe
@@ -52,6 +62,10 @@ export default class LobbyScene extends Phaser.Scene {
             id: 'menu-nick',
             type: 'text',
             maxlength: 16,
+            fontFamily: 'jersey',
+            fontSize: '24px',
+            resolution: 30,
+            color: '#000000ff',
             placeholder: 'Twój nick',
             style: `
                 border: 2px solid #444;
@@ -89,7 +103,9 @@ export default class LobbyScene extends Phaser.Scene {
 
         // Nazwa mapy
         this.mapNameText = this.add.text(250, selectionY + 70, '', {
-            fontSize: '16px',
+            resolution: 30,
+            fontFamily: 'jersey',
+            fontSize: '25px',
             color: '#ffffff'
         }).setOrigin(0.5);
 
@@ -114,14 +130,17 @@ export default class LobbyScene extends Phaser.Scene {
 
         // Nazwa skina
         this.skinNameText = this.add.text(550, selectionY + 70, '', {
-            fontSize: '16px',
+            resolution: 30,
+            fontFamily: 'jersey',
+            fontSize: '25px',
             color: '#ffffff'
         }).setOrigin(0.5);
 
         // Przycisk dołącz - pod sekcjami wyboru
-        this.startButton = this.add.text(400, 320, 'Dołącz do gry', {
-            fontSize: '24px',
-            fontFamily: 'Arial Black',
+        this.startButton = this.add.text(400, 320, 'Join game', {
+            resolution: 30,
+            fontSize: '36px',
+            fontFamily: 'jersey',
             color: '#000000',
             border: '2px solid #444',
             borderRadius: '15px',
@@ -191,7 +210,7 @@ export default class LobbyScene extends Phaser.Scene {
 
             // Zablokuj kontrolki
             this.inputNick.node.disabled = true;
-            this.startButton.setText('Oczekiwanie...');
+            this.startButton.setText('Waiting...');
             this.startButton.setStyle({ backgroundColor: '#666666' });
             this.startButton.removeInteractive();
             this.prevMapButton.removeInteractive();
@@ -222,102 +241,56 @@ export default class LobbyScene extends Phaser.Scene {
         });
 
         // Ciemne tło odliczania
-        this.countdownBg = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.9);
-        
+        this.countdownBg = this.add.rectangle(400, 300, 800, 600, 0x0b0b0b, 0.9);
+
         // Tekst "Gra się rozpoczyna!"
-        this.gameStartText = this.add.text(400, 200, 'Gra się rozpoczyna!', {
+        this.gameStartText = this.add.text(400, 200, 'Game is starting!', {
+            resolution: 30,
             fontSize: '36px',
-            fontFamily: 'Arial Black',
+            fontFamily: 'jersey',
             color: '#ffffff',
             stroke: '#000000',
             strokeThickness: 4,
             shadow: { offsetX: 3, offsetY: 3, color: '#000000', blur: 6, fill: true }
         }).setOrigin(0.5);
 
-        // Tekst odliczania - duży i wyraźny
-        this.countdownText = this.add.text(400, 300, '3', {
+        // Tekst odliczania - prosty bez efektów
+        this.countdownText = this.add.text(400, 300, '', {
+            resolution: 30,
             fontSize: '140px',
-            fontFamily: 'Arial Black',
-            color: '#ffffff',
-            stroke: '#ff4444',
-            strokeThickness: 10,
-            shadow: { offsetX: 5, offsetY: 5, color: '#000000', blur: 12, fill: true }
+            fontFamily: 'jersey',
+            color: '#ffffff'
         }).setOrigin(0.5);
 
         // Tekst pomocy
-        this.helpText = this.add.text(400, 400, 'Przygotuj się do walki!', {
+        this.helpText = this.add.text(400, 400, 'Get ready!', {
+            resolution: 30,
             fontSize: '24px',
-            fontFamily: 'Arial',
-            color: '#cccccc',
-            stroke: '#000000',
-            strokeThickness: 2
+            fontFamily: 'jersey',
+            color: '#cccccc'
         }).setOrigin(0.5);
 
-        let countdown = 3;
+        // Ukryj inne teksty żeby nie przeszkadzały
+        this.gameStartText.setVisible(false);
+        this.helpText.setVisible(false);
+
+        // Natychmiastowy countdown - najprostszy
+        const sequence = ['3', '2', '1', 'GO!'];
+        let i = 0;
         
-        // Timer odliczania
+        this.countdownText.setText(sequence[i]);
+        
         this.countdownTimer = this.time.addEvent({
-            delay: 1000,
+            delay: 500, // Jeszcze szybciej
             callback: () => {
-                countdown--;
-                
-                if (countdown > 0) {
-                    this.countdownText.setText(countdown.toString());
-                    
-                    // Efekt pulsowania - każda cyfra
-                    this.countdownText.setScale(1.8);
-                    this.tweens.add({
-                        targets: this.countdownText,
-                        scaleX: 1,
-                        scaleY: 1,
-                        duration: 400,
-                        ease: 'Bounce.out'
-                    });
-                    
-                    // Zmiana koloru stopniowo
-                    if (countdown === 2) {
-                        this.countdownText.setStyle({ stroke: '#ff8844' });
-                    } else if (countdown === 1) {
-                        this.countdownText.setStyle({ stroke: '#ffaa44' });
-                    }
-                    
+                i++;
+                if (i < sequence.length) {
+                    this.countdownText.setText(sequence[i]);
                 } else {
-                    // Pokaż "START!"
-                    this.countdownText.setText('START!');
-                    this.countdownText.setStyle({ 
-                        color: '#44ff44', 
-                        stroke: '#006600',
-                        fontSize: '120px'
-                    });
-                    this.gameStartText.setText('Walka rozpoczęta!');
-                    this.helpText.setText('Powodzenia!');
-                    
-                    // Animacja eksplozji START
-                    this.countdownText.setScale(2.5);
-                    this.tweens.add({
-                        targets: this.countdownText,
-                        scaleX: 1,
-                        scaleY: 1,
-                        duration: 600,
-                        ease: 'Back.out'
-                    });
-                    
-                    // Płynne przejście do gry po 0.5 sekundzie
-                    this.time.delayedCall(500, () => {
-                        // Animacja zanikania
-                        this.tweens.add({
-                            targets: [this.countdownBg, this.countdownText, this.gameStartText, this.helpText],
-                            alpha: 0,
-                            duration: 500,
-                            ease: 'Power2',
-                            onComplete: () => {
-                                this.scene.start('GameScene', gameData);
-                            }
-                        });
-                    });
+                    this.scene.start('GameScene', gameData);
                 }
             },
-            repeat: 2
+            repeat: 3
         });
     }
 

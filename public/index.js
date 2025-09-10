@@ -16,6 +16,7 @@ const config = {
   physics: {
     default: "arcade",
     arcade: { debug: false }
+
   },
   scene: [LobbyScene, GameScene]
 };
