@@ -282,7 +282,8 @@ export default class LobbyScene extends Phaser.Scene {
         socket.on("startGame", (sockets, players, mapName) => {
             const playerId = sockets[socket.id].id;
             const gameData = { players: players, playerId: playerId, socket: socket, mapName: mapName };
-            this.startCountdown(gameData);
+            //this.startCountdown(gameData);
+            this.scene.start('GameScene', gameData);
         });
     }
 
