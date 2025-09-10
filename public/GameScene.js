@@ -62,6 +62,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.load.image('slow-indic', 'assets/slow_indic.png');
         this.load.image('speed-indic', 'assets/speed_indic.png');
+        this.load.image('frame', 'assets/frame.png');
 
     }
 
@@ -296,6 +297,9 @@ export default class GameScene extends Phaser.Scene {
             player.spriteBody = sprite;
             player.speedIndicator = speedIndicatorSprite;
             player.slowIndicator = slowIndicatorSprite;
+            player.bonusCharges = ply.bonusCharges;
+            player.hasPlantedBomb = ply.hasPlantedBomb;
+            player.health = ply.health;
             if (ply.id == this.playerId) {
                 this.player = player;
             }
@@ -315,6 +319,43 @@ export default class GameScene extends Phaser.Scene {
         this.bombGroup = this.physics.add.group();
 
         this.socket.emit('mapCreated', { mapArray: mapArray });
+
+        //ADD BOMB COUNTER:
+ 
+
+        let bg = this.add.image(0, 0, 'frame') // white fill
+            .setOrigin(0, 0.5);               // left-middle anchor                  // optional black border
+
+        // === Bomb sprite ===
+        let bomb = this.add.image(0, 0, 'bomba1')
+            .setScale(0.6)
+            .setOrigin(0, 0.5); // left aligned, middle vertically
+
+        // === Label ===
+        let label = this.add.text(40, 0, this.player.bonusCharges + (this.player.hasPlantedBomb ? 0 : 1), {
+            fontSize: "20px",
+            color: "#000",          // black text for contrast on white
+            stroke: "#fff",         // optional white stroke
+            strokeThickness: 2
+        }).setOrigin(0, 0.5);           // left aligned, middle vertically
+
+        let health_img = this.add.image(80, 0, 'heart1')
+            .setOrigin(0, 0.5); // left aligned, middle vertically
+
+        // === Label ===
+        let hp_label = this.add.text(120, 0, this.player.health, {
+            fontSize: "20px",
+            color: "#000",          // black text for contrast on white
+            stroke: "#fff",         // optional white stroke
+            strokeThickness: 2
+        }).setOrigin(0, 0.5);
+        // === Group into container ===
+        // Put bg first so it's behind the bomb and text
+        let bombWithText = this.add.container(0, 680, [bg, bomb, label, health_img, hp_label]);
+        console.log(bombWithText);
+
+        this.hp_label = hp_label;
+        this.bomb_label = label;
     }
 
 
@@ -444,6 +485,9 @@ export default class GameScene extends Phaser.Scene {
                         playerContainer.setActive(false); // usuń gracza z gry
                         // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
                     }
+
+                    this.hp_label.setText(ply.health);
+                    this.bomb_label.setText(ply.bonusCharges + (ply.hasPlantedBomb ? 0 : 1));
                 }
                 else {
 

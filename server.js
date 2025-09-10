@@ -188,7 +188,6 @@ io.on("connection", (socket) => {
     socket.on('pickedPowerup', (data) => {
         //server wie jaki gracz ma powerup
         const { id, x, y, type } = data;
-        console.log(id, x, y, type);
 
         //can be buggy
         if(!map[y][x].powerup)return;
