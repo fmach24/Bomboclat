@@ -5,6 +5,8 @@ const config = {
   type: Phaser.AUTO,
   width: 800,
   height: 600,
+  backgroundColor: '#0b0b0b',
+  // color: '#0b0b0b', 
   parent: "game-container",
   dom: { createContainer: true },
   scale: {
@@ -14,6 +16,7 @@ const config = {
   physics: {
     default: "arcade",
     arcade: { debug: false }
+
   },
   scene: [LobbyScene, GameScene]
 };

@@ -8,6 +8,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
+
+        this.load.font('jersey', 'assets/fonts/jersey10.ttf');
         //mapy
         this.load.tilemapTiledJSON("beachMap", "assets/beachMap.tmj");
         this.load.image("beachTiles", "assets/beachTiles.png");
@@ -448,6 +450,8 @@ export default class GameScene extends Phaser.Scene {
             slowIndicatorSprite.setVisible(false);
             // Create nickname text
             const nickname = this.add.text(0, -56, ply.nick || "NICK", {
+                resolution: 30,
+                fontFamily: 'jersey',
                 fontSize: "16px",
                 color: "#fff",
                 stroke: "#000",
@@ -459,6 +463,8 @@ export default class GameScene extends Phaser.Scene {
                 .setScale(0.7);
 
             const hp_bar = this.add.text(0, -40, ply.health, {
+                fontFamily: 'jersey',
+                resolution: 30,
                 fontSize: "16px",
                 color: "#47c070ff",
                 stroke: "#000",
@@ -524,6 +530,8 @@ export default class GameScene extends Phaser.Scene {
             .setOrigin(0, 0.5);
 
         let label = this.add.text(40, 0, this.player.bonusCharges + (this.player.hasPlantedBomb ? 0 : 1), {
+            resolution: 30,
+            fontFamily: 'jersey',
             fontSize: "20px",
             color: "#000",
             stroke: "#fff",
@@ -535,6 +543,8 @@ export default class GameScene extends Phaser.Scene {
             .setOrigin(0, 0.5);
 
         let hp_label = this.add.text(120, 0, this.player.health, {
+            resolution: 30,
+            fontFamily: 'jersey',   
             fontSize: "20px",
             color: "#000",
             stroke: "#fff",
@@ -548,6 +558,8 @@ export default class GameScene extends Phaser.Scene {
 
         const remainingSpeedTime = this.player.speedEffectStamp - Date.now() ;
         let speed_label = this.add.text(180, 0, remainingSpeedTime > 0 ? remainingSpeedTime : "-", {
+            resolution: 30,
+            fontFamily: 'jersey',
             fontSize: "20px",
             color: "#000",
             stroke: "#fff",
@@ -561,6 +573,8 @@ export default class GameScene extends Phaser.Scene {
 
         const remainingSlowTime = this.player.slowEffectStamp - Date.now() ;
         let slow_label = this.add.text(260, 0,  remainingSlowTime > 0 ? remainingSlowTime : "-", {
+            resolution: 30,
+            fontFamily: 'jersey',
             fontSize: "20px",
             color: "#000",
             stroke: "#fff",
@@ -868,15 +882,23 @@ export default class GameScene extends Phaser.Scene {
                     effect.on('animationcomplete', () => {
                         effect.destroy();
                     });
-
                 }
             }
+        }
 
+        // Ensure countdown displays 0 before transitioning
+        if (this.countdownText) {
+            this.countdownText.setText('0');
+            this.time.delayedCall(500, () => {
+                this.countdownText.setVisible(false);
+            });
         }
     }
 
     showFloatingText(x, y, text, color = "#fff") {
         const floatingText = this.add.text(x, y, text, {
+            resolution: 30,
+            fontFamily: 'jersey',
             fontSize: "16px",
             color: color,
             stroke: "#000",
@@ -931,11 +953,12 @@ export default class GameScene extends Phaser.Scene {
         const title = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY - 100,
-            "PRZEGRAŁEŚ!",
+            "You died!",
             {
-                fontSize: "32px",
+                resolution: 30,
+                fontFamily: 'jersey',
+                fontSize: "100px",
                 color: "#ff0000",
-                fontStyle: "bold",
                 stroke: "#000",
                 strokeThickness: 3
             }
@@ -948,9 +971,11 @@ export default class GameScene extends Phaser.Scene {
         const gameInfo = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY - 40,
-            "Możesz dalej obserwować rozgrywkę\n\nStatystyki:\n• Zgony: 1\n• Czas gry: " + Math.floor(this.time.now / 1000) + "s",
+            "\n\nStatistics:\n• Game time: " + Math.floor(this.time.now / 1000) + "s",
             {
-                fontSize: "16px",
+                resolution: 30,
+                fontFamily: 'jersey',
+                fontSize: "25px",
                 color: "#ffffff",
                 align: "center",
                 stroke: "#000",
@@ -965,12 +990,13 @@ export default class GameScene extends Phaser.Scene {
         const instruction = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY + 80,
-            "Obserwuj pozostałych graczy\naby zobaczyć kto wygra!",
+            "Watch the other players\n to see who will win!",
             {
-                fontSize: "14px",
+                resolution: 30,
+                fontFamily: 'jersey',
+                fontSize: "25px",
                 color: "#cccccc",
-                align: "center",
-                fontStyle: "italic"
+                align: "center"
             }
         );
         instruction.setOrigin(0.5);
