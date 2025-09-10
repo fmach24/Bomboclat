@@ -277,37 +277,44 @@ io.on("connection", (socket) => {
     socket.on("plantBomb", (ply) => {
 
         //START HELPES:
-
+        
         const checkIfPlayerHit = (bomb, y, x) => {
+            
+            let result = [];
             Object.values(players).forEach(p => {
+                //tu trzeba patrzec na tablice na Miro gdzie to wypisalem co co robi.
                 // Player is a 64x64 box centered at p.x, p.y
                 const playerHalf = 32;
                 const playerLeft = p.x - playerHalf;
                 const playerRight = p.x + playerHalf;
-                const playerTop = p.y - playerHalf;
-                const playerBottom = p.y + playerHalf;
+                const playerTop = p.y - playerHalf;    // Y maleje w górę
+                const playerBottom = p.y + playerHalf; // Y rośnie w dół
 
-                // Bomb is assumed to be grid aligned at (x, y) with size 64
+
                 const bombSize = 64;
-                const bombHalf = bombSize / 2;
-                const bombCenterX = x * bombSize + bombHalf;
-                const bombCenterY = y * bombSize + bombHalf;
+                const bombX_top = x * bombSize
+                const bombY_top = y * bombSize;
 
-                const bombLeft = bombCenterX - bombHalf;
-                const bombRight = bombCenterX + bombHalf;
-                const bombTop = bombCenterY - bombHalf;
-                const bombBottom = bombCenterY + bombHalf;
 
-                // Axis-Aligned Bounding Box (AABB) overlap check
-                const overlapX = playerLeft < bombRight && playerRight > bombLeft;
-                const overlapY = playerTop < bombBottom && playerBottom > bombTop;
+                const bombLeft = x * bombSize;
+                const bombRight = bombLeft + bombSize;
+                const bombTop = y * bombSize;
+                const bombBottom = bombTop + bombSize;
 
-                if (overlapX && overlapY) {
-                    p.health--;
 
-                    io.emit('update', players);
+              
+
+                if (playerRight > bombLeft &&
+                    playerLeft < bombRight &&
+                    playerBottom > bombTop &&
+                    playerTop < bombBottom) {
+                    
+                    result.push(p.id);
+                    
                 }
+               
             });
+            return result;
         };
 
 
@@ -316,6 +323,8 @@ io.on("connection", (socket) => {
             console.log("Detonating bomb at:", gridX, gridY, bomb);
             console.log("Map dimensions:", mapWidth, mapHeight);
             console.log("Map state:", map);
+
+            let playersHit = [];
 
             let x_offset, y_offset;
             const affectedArea = Array.from({ length: mapHeight }, () =>
@@ -333,8 +342,9 @@ io.on("connection", (socket) => {
             while (Math.abs(x_offset) <= bomb.range &&
                 gridX + x_offset >= 0  && !map[gridX + x_offset][gridY + y_offset].wall
                 ) {
-
-                checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
+                
+                //pogubilem sie ale na pewno takie podanie do checkIFPlayerHit koordynatow skutkuje tym ze X jest standardowo rozumiany, y im wiecej tym nizej.
+                playersHit.push(...checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset));
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 x_offset--;
             }
@@ -345,7 +355,7 @@ io.on("connection", (socket) => {
             while (x_offset <= bomb.range &&
                 gridX + x_offset < mapWidth && !map[gridX + x_offset][gridY + y_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
+                playersHit.push(...checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset));
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 x_offset++;
             }
@@ -357,7 +367,7 @@ io.on("connection", (socket) => {
                 gridY + y_offset < mapHeight &&
             !map[gridX + x_offset][gridY + y_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
+                playersHit.push(...checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset));
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 y_offset++;
             }
@@ -369,16 +379,18 @@ io.on("connection", (socket) => {
                 gridY + y_offset >= 0 &&
                 !map[gridX + x_offset][gridY + y_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
+                playersHit.push(...checkIfPlayerHit(bomb, gridX + x_offset, gridY + y_offset));
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 y_offset--;
             }
 
-
-            map[gridY][gridX].bomb = null;
+            const uniqueHit = new Set(playersHit);
+            uniqueHit.forEach(p_id=> {players[p_id].health--;});
+            map[gridX][gridY].bomb = null;
             players[bomb.id].hasPlantedBomb = false;
 
             affectedArea[gridY][gridX] = true;
+            socket.emit("update", players);
             socket.emit("explosionDetails", affectedArea,map);
         };
 
@@ -416,6 +428,10 @@ io.on("connection", (socket) => {
             }, DETONATION_TIME);
 
             io.emit("newBomb", bomb);
+        }
+        else{
+            console.log("huh");
+
         }
     })
 });
