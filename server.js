@@ -86,6 +86,7 @@ io.on("connection", (socket) => {
             nick: data.nick,
             id: playerId,
             spawn: "",
+            skin: data.playerSkin,
             health: HP_MAX,
             x: null,
             y: null,
@@ -106,6 +107,7 @@ io.on("connection", (socket) => {
         console.log("User connected:", socket.id);
         console.log("Current sockets:", sockets);
         console.log("Map preferences:", mapPreferences);
+        console.log("Skin:", data.playerSkin);
         //TODO: gdy gra sie zacznie i osobna wyjdzie z gry i dolaczy znowu, to zacznie nowa gre wtedy, moze zrobic tak, że sockets beda usuwane po rozpoczaciu gry?
         //gdy jest 4 graczy
         if (Object.keys(sockets).length === REQUIRED_PLAYERS) {
@@ -138,7 +140,7 @@ io.on("connection", (socket) => {
         // Uruchom timer powerupów dopiero gdy wszyscy gracze wyślą mapCreated
         if (mapCreatedCount === REQUIRED_PLAYERS) {// && !powerupTimerStarted) {
             // powerupTimerStarted = true;
-            
+
             console.log("Wszyscy gracze wysłali mapCreated - uruchamiam timer powerupów");
 
             mapHeight = data.mapArray.length;
@@ -156,7 +158,7 @@ io.on("connection", (socket) => {
                     return;
                 }
 
-                if(currentActivePowerups >= MAX_ACTIVE_POWERUPS)
+                if (currentActivePowerups >= MAX_ACTIVE_POWERUPS)
                     return;
 
                 // Wybierz losowe współrzędne na podstawie rzeczywistych wymiarów
@@ -190,24 +192,24 @@ io.on("connection", (socket) => {
         const { id, x, y, type } = data;
 
         //can be buggy
-        if(!map[y][x].powerup)return;
+        if (!map[y][x].powerup) return;
 
         map[y][x].powerup = false;
 
-        switch(type){
+        switch (type) {
             //speed
             case 0:
                 players[id].powerups[type] = true; // przyznaj powerup graczowi
-                players[id].speedEffectStamp = Date.now() + 10*1000;
+                players[id].speedEffectStamp = Date.now() + 10 * 1000;
                 break;
 
             //slow
             case 1:
                 Object.values(players).forEach(ply => {
                     //give everyone else the slow!
-                    if(ply.id != id){
-                    ply.powerups[type] = true; // przyznaj powerup graczowi
-                    ply.slowEffectStamp = Date.now() + 10*1000;
+                    if (ply.id != id) {
+                        ply.powerups[type] = true; // przyznaj powerup graczowi
+                        ply.slowEffectStamp = Date.now() + 10 * 1000;
                     }
                 });
 
@@ -226,7 +228,7 @@ io.on("connection", (socket) => {
                 break;
         }
         currentActivePowerups--;
-        io.emit('update', players); 
+        io.emit('update', players);
         io.emit('destroyPowerup', { x, y });
     });
 
@@ -302,8 +304,8 @@ io.on("connection", (socket) => {
 
                     io.emit('update', players);
                 }
-    });
-};
+            });
+        };
 
 
         const detonateBomb = (gridX, gridY, bomb) => {
@@ -314,10 +316,10 @@ io.on("connection", (socket) => {
 
             let x_offset, y_offset;
             const affectedArea = Array.from({ length: mapHeight }, () =>
-                Array.from({ length: mapWidth }, () => ( false))
+                Array.from({ length: mapWidth }, () => (false))
             );
             // order of checking: bomb range, world borders, wall
-            
+
 
 
             // going left:
@@ -327,7 +329,7 @@ io.on("connection", (socket) => {
                 gridX + x_offset >= 0 &&
                 !map[gridY + y_offset][gridX + x_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
+                checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 x_offset--;
             }
@@ -339,7 +341,7 @@ io.on("connection", (socket) => {
                 gridX + x_offset < mapWidth &&
                 !map[gridY + y_offset][gridX + x_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
+                checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 x_offset++;
             }
@@ -351,7 +353,7 @@ io.on("connection", (socket) => {
                 gridY + y_offset < mapHeight &&
                 !map[gridY + y_offset][gridX + x_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
+                checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 y_offset++;
             }
@@ -363,12 +365,12 @@ io.on("connection", (socket) => {
                 gridY + y_offset >= 0 &&
                 !map[gridY + y_offset][gridX + x_offset].wall) {
 
-                checkIfPlayerHit(bomb, gridY + y_offset,gridX + x_offset);
+                checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
                 y_offset--;
             }
 
-            
+
             map[gridY][gridX].bomb = null;
             players[bomb.id].hasPlantedBomb = false;
 
@@ -401,8 +403,8 @@ io.on("connection", (socket) => {
             map[gridY][gridX].bomb = bomb;
             players[ply.id].hasPlantedBomb = true;
 
-            if(players[ply.id].powerups[2]){
-                players[ply.id].bonusCharges = Math.max(0, players[ply.id].bonusCharges-1);
+            if (players[ply.id].powerups[2]) {
+                players[ply.id].bonusCharges = Math.max(0, players[ply.id].bonusCharges - 1);
             }
 
             setTimeout(() => {

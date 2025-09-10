@@ -15,11 +15,14 @@ export default class GameScene extends Phaser.Scene {
         this.load.tilemapTiledJSON("forestMap", "assets/forestMap.tmj");
         this.load.image("forestTiles", "assets/forestTiles.png");
 
-        // sprite gracza
-        this.load.spritesheet("player", "assets/player.png", {
-            frameWidth: 64,
-            frameHeight: 64
-        });
+        this.load.tilemapTiledJSON("portugalMap", "assets/portugalMap.tmj");
+        this.load.image("portugalTiles", "assets/portugalTiles.png");
+
+        // // sprite gracza
+        // this.load.spritesheet("player", "assets/player.png", {
+        //     frameWidth: 64,
+        //     frameHeight: 64
+        // });
 
         // Animacje powerupów - ładowanie klatek
         // Speed powerup (powerup0) - 12 klatek
@@ -41,7 +44,7 @@ export default class GameScene extends Phaser.Scene {
         for (let i = 1; i <= 12; i++) {
             this.load.image(`bomba${i}`, `assets/animations/bomba${i}.png`);
         }
- 
+
         for (let i = 1; i <= 8; i++) {
             this.load.image(`explosion${i}`, `assets/animations/wybuchbomby${i}.png`);
         }
@@ -51,13 +54,43 @@ export default class GameScene extends Phaser.Scene {
         this.load.image('standing2l', 'assets/animations/standing2l.png');
         this.load.image('standing1r', 'assets/animations/standing1r.png');
         this.load.image('standing2r', 'assets/animations/standing2r.png');
-        this.load.spritesheet('bomb-explosion','assets/animations/bomb-explosion.png', {frameWidth:16, frameHeight:16});
 
-        
+        // === ANIMACJE BOMBARDINHO ===
+        // Wszystkie kierunki ruchu
+        for (let i = 1; i <= 4; i++) {
+            this.load.image(`bombardinho_down${i}`, `assets/animations/bombardinho_down${i}.png`);
+            this.load.image(`bombardinho_up${i}`, `assets/animations/bombardinho_up${i}.png`);
+        }
+        for (let i = 1; i <= 6; i++) {
+            this.load.image(`bombardinho_left${i}`, `assets/animations/bombardinho_left${i}.png`);
+            this.load.image(`bombardinho_right${i}`, `assets/animations/bombardinho_right${i}.png`);
+        }
+
+        // === ANIMACJE FILIPEK ===
+        // Wszystkie kierunki ruchu
+        for (let i = 1; i <= 4; i++) {
+            this.load.image(`filipek_down${i}`, `assets/animations/filipek_down${i}.png`);
+            this.load.image(`filipek_up${i}`, `assets/animations/filipek_up${i}.png`);
+        }
+        for (let i = 1; i <= 6; i++) {
+            this.load.image(`filipek_left${i}`, `assets/animations/filipek_left${i}.png`);
+            this.load.image(`filipek_right${i}`, `assets/animations/filipek_right${i}.png`);
+        }
+
+        // === ANIMACJE GUCZO ===
+        this.load.image(`guczo_down1`, `assets/animations/Guczo1.png`);
+        this.load.image(`guczo_up1`, `assets/animations/Guczo3.png`);
+        this.load.image(`guczo_left1`, `assets/animations/Guczo2.png`);
+        this.load.image(`guczo_right1`, `assets/animations/Guczo4.png`);
+
+
+        this.load.spritesheet('bomb-explosion', 'assets/animations/bomb-explosion.png', { frameWidth: 16, frameHeight: 16 });
+
+
 
         this.load.image('slow-indic', 'assets/slow_indic.png');
         this.load.image('speed-indic', 'assets/speed_indic.png');
-        this.load.spritesheet('heart-idle', 'assets/animations/heart-spritesheet.png', {frameWidth:32,frameHeight:32});
+        this.load.spritesheet('heart-idle', 'assets/animations/heart-spritesheet.png', { frameWidth: 32, frameHeight: 32 });
         this.load.image('heart1', 'assets/animations/heart1.png');
 
         this.load.image('slow-indic', 'assets/slow_indic.png');
@@ -77,6 +110,9 @@ export default class GameScene extends Phaser.Scene {
         this.socket = data.socket;
         this.speed = 300;
         this.map = null;
+        //TODO: skiny
+        this.skin = data.players[this.playerId].skin || "default";
+        console.log("Player skin:", this.skin);
         this.isDead = false; // Flaga czy gracz już umarł
 
         // Tworzenie animacji powerupów i gracza
@@ -99,7 +135,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.socket.on('newBomb', (data) => { this.newBomb(data); });
 
-        this.socket.on('explosionDetails', (data)=>{this.animateExplosion(data);})
+        this.socket.on('explosionDetails', (data) => { this.animateExplosion(data); })
 
     }
 
@@ -152,17 +188,17 @@ export default class GameScene extends Phaser.Scene {
             repeat: -1 // zapętlenie w nieskończoność
         });
 
-        const explosionFrames=[];
-        for(let i =1; i<= 8; i++){
-            explosionFrames.push({key:`explosion${i}`});
+        const explosionFrames = [];
+        for (let i = 1; i <= 8; i++) {
+            explosionFrames.push({ key: `explosion${i}` });
         }
         this.anims.create({
-            key:'bomb-explode',
+            key: 'bomb-explode',
             frames: explosionFrames,
-            frameRate:10,
-            repeat:0
+            frameRate: 10,
+            repeat: 0
         });
-        // Animacje gracza - idąc w lewo
+        // Animacje gracza domyślnego - idąc w lewo
         this.anims.create({
             key: 'left',
             frames: [
@@ -173,7 +209,7 @@ export default class GameScene extends Phaser.Scene {
             repeat: -1
         });
 
-        // Animacje gracza - idąc w prawo
+        // Animacje gracza domyślnego - idąc w prawo
         this.anims.create({
             key: 'right',
             frames: [
@@ -184,12 +220,164 @@ export default class GameScene extends Phaser.Scene {
             repeat: -1
         });
 
+        // === ANIMACJE BOMBARDINHO ===
+        this.anims.create({
+            key: 'bombardinho-down',
+            frames: [
+                { key: 'bombardinho_down1' },
+                { key: 'bombardinho_down2' },
+                { key: 'bombardinho_down3' },
+                { key: 'bombardinho_down4' }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
 
         this.anims.create({
-            key:'heart-idle', 
-            frames:this.anims.generateFrameNames('heart-idle', {start:0, end:4}),
-            frameRate:10,
-            repeat:-1
+            key: 'bombardinho-up',
+            frames: [
+                { key: 'bombardinho_up1' },
+                { key: 'bombardinho_up2' },
+                { key: 'bombardinho_up3' },
+                { key: 'bombardinho_up4' }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'bombardinho-left',
+            frames: [
+                { key: 'bombardinho_left1' },
+                { key: 'bombardinho_left2' },
+                { key: 'bombardinho_left3' },
+                { key: 'bombardinho_left4' },
+                { key: 'bombardinho_left5' },
+                { key: 'bombardinho_left6' }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'bombardinho-right',
+            frames: [
+                { key: 'bombardinho_right1' },
+                { key: 'bombardinho_right2' },
+                { key: 'bombardinho_right3' },
+                { key: 'bombardinho_right4' },
+                { key: 'bombardinho_right5' },
+                { key: 'bombardinho_right6' }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'bombardinho-idle',
+            frames: [{ key: 'bombardinho_down1' }],
+            frameRate: 1
+        });
+
+        // === ANIMACJE FILIPEK ===
+        this.anims.create({
+            key: 'filipek-down',
+            frames: [
+                { key: 'filipek_down1' },
+                { key: 'filipek_down2' },
+                { key: 'filipek_down3' },
+                { key: 'filipek_down4' }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'filipek-up',
+            frames: [
+                { key: 'filipek_up1' },
+                { key: 'filipek_up2' },
+                { key: 'filipek_up3' },
+                { key: 'filipek_up4' }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'filipek-left',
+            frames: [
+                { key: 'filipek_left1' },
+                { key: 'filipek_left2' },
+                { key: 'filipek_left3' },
+                { key: 'filipek_left4' },
+                { key: 'filipek_left5' },
+                { key: 'filipek_left6' }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'filipek-right',
+            frames: [
+                { key: 'filipek_right1' },
+                { key: 'filipek_right2' },
+                { key: 'filipek_right3' },
+                { key: 'filipek_right4' },
+                { key: 'filipek_right5' },
+                { key: 'filipek_right6' }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'filipek-idle',
+            frames: [{ key: 'filipek_down1' }],
+            frameRate: 1
+        });
+
+        // === ANIMACJE GUCZO ===
+        this.anims.create({
+            key: 'guczo-left',
+            frames: [
+                { key: 'guczo_left1' }
+            ],
+            frameRate: 1
+        });
+
+        this.anims.create({
+            key: 'guczo-right',
+            frames: [
+                { key: 'guczo_right1' }
+            ],
+            frameRate: 1
+        });
+
+        this.anims.create({
+            key: 'guczo-down',
+            frames: [
+                { key: 'guczo_down1' }
+            ],
+            frameRate: 1
+        });
+
+        this.anims.create({
+            key: 'guczo-up',
+            frames: [
+                { key: 'guczo_up1' }
+            ],
+            frameRate: 1
+        });
+
+
+
+        this.anims.create({
+            key: 'heart-idle',
+            frames: this.anims.generateFrameNames('heart-idle', { start: 0, end: 4 }),
+            frameRate: 10,
+            repeat: -1
         });
     }
 
@@ -251,11 +439,11 @@ export default class GameScene extends Phaser.Scene {
             const spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
 
             // Create main sprite
-            const sprite = this.add.sprite(0, 0, 'standing1r');
-            
-            const speedIndicatorSprite = this.add.sprite(0,20, 'speed-indic');
-            const slowIndicatorSprite = this.add.sprite(0,20, 'slow-indic');
-            
+            const sprite = this.add.sprite(0, 0, ply.skin + '_down1');
+
+            const speedIndicatorSprite = this.add.sprite(0, 20, 'speed-indic');
+            const slowIndicatorSprite = this.add.sprite(0, 20, 'slow-indic');
+
             speedIndicatorSprite.setVisible(false);
             slowIndicatorSprite.setVisible(false);
             // Create nickname text
@@ -276,8 +464,8 @@ export default class GameScene extends Phaser.Scene {
             hp_bar.name = this.HP_BAR_TAG;
 
             // Put sprite + text into a container
-            const player = this.add.container(spawnPoint.x, spawnPoint.y, [speedIndicatorSprite, slowIndicatorSprite,sprite, nickname, hp_bar ]);
-            
+            const player = this.add.container(spawnPoint.x, spawnPoint.y, [speedIndicatorSprite, slowIndicatorSprite, sprite, nickname, hp_bar]);
+
             // Enable physics on the container
             this.physics.world.enable(player);
 
@@ -304,7 +492,7 @@ export default class GameScene extends Phaser.Scene {
                 this.player = player;
             }
 
-            player.spriteBody.play(ply.currentDirection, true);
+            // player.spriteBody.play(ply.currentDirection + '_down1', true);
         });
 
 
@@ -406,7 +594,7 @@ export default class GameScene extends Phaser.Scene {
             // powerup.destroy(); // usuń powerupa z mapy
             const offsetX = Phaser.Math.Between(-20, 20);
 
-            switch(type){
+            switch (type) {
                 case 0:
                     this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "Speed Effect", "#fbf236");
                     break;
@@ -420,7 +608,7 @@ export default class GameScene extends Phaser.Scene {
                     this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "+1 Health", "#6abe30");
                     break;
             }
-            
+
         });
     }
 
@@ -448,17 +636,26 @@ export default class GameScene extends Phaser.Scene {
             if (playerContainer && (ply.x != null) && (ply.y != null)) {
                 // console.log(players)
 
-                const direction = ply.currentDirection || "right"; // domyślnie w prawo
-                if (direction === "left") {
-                    playerContainer.spriteBody.play('left', true);
-                } else if (direction === "right") {
-                    playerContainer.spriteBody.play('right', true);
+                const direction = ply.currentDirection;
+
+                // Jeśli direction jest null, 0 lub undefined - gracz stoi (idle)
+                if (!direction || direction === 0 || direction === null) {
+                    // Pokaż statyczną klatkę _down1 (idle)
+                    playerContainer.spriteBody.stop();
+                    const idleTexture = ply.skin + '_down1';
+                    playerContainer.spriteBody.setTexture(idleTexture);
+                } else {
+                    // Gracz się porusza - odtwarzaj animację
+                    if (direction === "left") {
+                        playerContainer.spriteBody.play(ply.skin + '-left', true);
+                    } else if (direction === "right") {
+                        playerContainer.spriteBody.play(ply.skin + '-right', true);
+                    } else if (direction === "up") {
+                        playerContainer.spriteBody.play(ply.skin + '-up', true);
+                    } else if (direction === "down") {
+                        playerContainer.spriteBody.play(ply.skin + '-down', true);
+                    }
                 }
-                //  else if (direction === "up") {
-                //     playerContainer.spriteBody.setFlipX(false);
-                // } else if (direction === "down") {
-                //     playerContainer.spriteBody.setFlipX(false);
-                // }
                 const hasSpeedEffect = ply.speedEffectStamp >= Date.now();
                 const hasSlowEffect = ply.slowEffectStamp >= Date.now();
                 //jesli to jest nasz gracz
@@ -469,7 +666,7 @@ export default class GameScene extends Phaser.Scene {
                     if (hasSpeedEffect) {
                         this.speed = 200; // Powerup SPEED
                     }
-                    else if(hasSlowEffect){
+                    else if (hasSlowEffect) {
                         this.speed = 75; //powerup slow
                     }
                     else {
@@ -602,6 +799,9 @@ export default class GameScene extends Phaser.Scene {
 
         if (this.player.body.velocity.length() > 0) {
             this.sendUpdate(direction);
+        } else {
+            // Gracz się zatrzymał - wyślij null do serwera
+            this.sendUpdate(null);
         }
 
         if (cursors.space.isDown) {
@@ -610,12 +810,12 @@ export default class GameScene extends Phaser.Scene {
     }
 
     animateExplosion(area) {
-        
+
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
                 if (area[y][x]) {
                     const effect = this.add.sprite(y * 64 + 32, x * 64 + 32, 'explosion1');
-                 
+
                     effect.play('bomb-explode');
                     effect.on('animationcomplete', () => {
                         effect.destroy();
