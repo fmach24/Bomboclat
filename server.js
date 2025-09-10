@@ -21,6 +21,7 @@ const SPEED_DURATION = 5 * 1000;
 const SLOW_DURATION = 10 * 1000;
 const MAX_CHARGES = 3;
 const MAX_HP =4;
+const BONUS_CHARGES = 2;
 let currentActivePowerups = 0;
 let mapName = "";
 let mapHeight = 0;
@@ -221,7 +222,7 @@ io.on("connection", (socket) => {
             //bonus charges:
             case 2:
                 players[id].powerups[type] = true;
-                players[id].bonusCharges = Math.min(players[id].bonusCharges + 1, MAX_CHARGES);
+                players[id].bonusCharges = Math.min(players[id].bonusCharges + BONUS_CHARGES, MAX_CHARGES);
                 break;
 
             //HP
@@ -432,10 +433,13 @@ io.on("connection", (socket) => {
 
             const bomb = { range: getRangeFor(ply), id: ply.id, timeout: DETONATION_TIME, x: bombX, y: bombY };
             map[gridY][gridX].bomb = bomb;
-            players[ply.id].hasPlantedBomb = true;
+            
 
-            if (players[ply.id].powerups[2]) {
-                players[ply.id].bonusCharges = Math.max(0, players[ply.id].bonusCharges - 1);
+            if (players[ply.id].bonusCharges > 0) {
+                players[ply.id].bonusCharges--;
+            }
+            else{
+                players[ply.id].hasPlantedBomb = true;
             }
 
             setTimeout(() => {
@@ -444,10 +448,7 @@ io.on("connection", (socket) => {
 
             io.emit("newBomb", bomb);
         }
-        else{
-            // console.log("huh");
 
-        }
     })
 });
 
