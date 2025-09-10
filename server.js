@@ -432,10 +432,13 @@ io.on("connection", (socket) => {
 
             const bomb = { range: getRangeFor(ply), id: ply.id, timeout: DETONATION_TIME, x: bombX, y: bombY };
             map[gridY][gridX].bomb = bomb;
-            players[ply.id].hasPlantedBomb = true;
+            
 
-            if (players[ply.id].powerups[2]) {
-                players[ply.id].bonusCharges = Math.max(0, players[ply.id].bonusCharges - 1);
+            if (players[ply.id].bonusCharges > 0) {
+                players[ply.id].bonusCharges--;
+            }
+            else{
+                players[ply.id].hasPlantedBomb = true;
             }
 
             setTimeout(() => {
@@ -444,10 +447,7 @@ io.on("connection", (socket) => {
 
             io.emit("newBomb", bomb);
         }
-        else{
-            console.log("huh");
 
-        }
     })
 });
 

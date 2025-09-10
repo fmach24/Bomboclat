@@ -1,7 +1,7 @@
 export default class GameScene extends Phaser.Scene {
 
     HP_BAR_TAG = "hp_bar";
-
+    TRY_RECONNECT = false;
     constructor() {
         super("GameScene");
 
@@ -101,38 +101,16 @@ export default class GameScene extends Phaser.Scene {
 
     }
 
-    async handleReconnect(data,socket) {
+
         
 
-        try {
-            const reconnectionData = await new Promise((resolve, reject) => {
-                socket.emit("reconnect", data.id);
-
-                socket.on("reconnectionData", (info) => {
-                    if (info?.reconnectSuccess) {
-                        resolve(info);
-                    } else {
-                        reject(new Error("Reconnect failed"));
-                    }
-                });
-
-                setTimeout(() => reject(new Error("Reconnect timeout")), 5000);
-            });
-
-            return reconnectionData;
-
-        } catch (err) {
-            alert("Gra juz nie istnieje. Reset pamieci lokalnej. Odswiez strone zeby dolaczyc.");
-            localStorage.clear();
-        }
-    }
 
 
     //start scene -> create
     create(data) {
 
         
-    if (data.reconnect) {
+    if (data.reconnect && this.TRY_RECONNECT) {
         const revivedData = JSON.parse(localStorage.getItem("reconnectionData"));
         revivedData.reconnect = true;
         this.initializeGame(revivedData,data.socket)
@@ -140,6 +118,7 @@ export default class GameScene extends Phaser.Scene {
         
     }
     else{
+        localStorage.setItem("reconnectionData", null);
         this.initializeGame(data, data.socket);
     }
 }
