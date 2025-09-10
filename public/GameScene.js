@@ -101,15 +101,57 @@ export default class GameScene extends Phaser.Scene {
 
     }
 
+    async handleReconnect(data,socket) {
+        
+
+        try {
+            const reconnectionData = await new Promise((resolve, reject) => {
+                socket.emit("reconnect", data.id);
+
+                socket.on("reconnectionData", (info) => {
+                    if (info?.reconnectSuccess) {
+                        resolve(info);
+                    } else {
+                        reject(new Error("Reconnect failed"));
+                    }
+                });
+
+                setTimeout(() => reject(new Error("Reconnect timeout")), 5000);
+            });
+
+            return reconnectionData;
+
+        } catch (err) {
+            alert("Gra juz nie istnieje. Reset pamieci lokalnej. Odswiez strone zeby dolaczyc.");
+            localStorage.clear();
+        }
+    }
+
 
     //start scene -> create
     create(data) {
 
+        
+    if (data.reconnect) {
+        const revivedData = JSON.parse(localStorage.getItem("reconnectionData"));
+        revivedData.reconnect = true;
+        this.initializeGame(revivedData,data.socket)
+        console.log(revivedData);
+        
+    }
+    else{
+        this.initializeGame(data, data.socket);
+    }
+}
+       
+    initializeGame(data,socket){
+
         // alert(data.players);
+        console.log(data);
         this.mapName = data.mapName;
         this.players = data.players;
         this.playerId = data.playerId;
-        this.socket = data.socket;
+        this.socket = socket;
         this.speed = 300;
         this.map = null;
         //TODO: skiny
@@ -385,7 +427,7 @@ export default class GameScene extends Phaser.Scene {
 
 
 
-    buildMap() {
+    buildMap(data) {
         // this.load.tilemapTiledJSON("map", "assets/" + mapName + "Map.tmj");
         // this.load.image("tilesKey", "assets/" + mapName + "Tiles.png");
         // Tworzymy mapę
@@ -431,15 +473,14 @@ export default class GameScene extends Phaser.Scene {
         //Osobno nasz lokalny gracz a osobno reszta otrzyjmuje polozenie.
         let spawntag = this.players[this.playerId].spawn;
         //TODO: czy to jest uzywane???
-        let spawnPoint = spawnLayer.objects.find(obj => obj.name === spawntag);
+        let spawnPoint2 = spawnLayer.objects.find(obj => obj.name === spawntag);
 
         this.playerGroup = this.physics.add.group()
 
 
         Object.values(this.players).forEach(ply => {
 
-            const spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
-
+            let spawnPoint = spawnLayer.objects.find(obj => obj.name === ply.spawn);
             // Create main sprite
             const sprite = this.add.sprite(0, 0, ply.skin + '_down1');
 
@@ -500,6 +541,10 @@ export default class GameScene extends Phaser.Scene {
             player.health = ply.health;
             if (ply.id == this.playerId) {
                 this.player = player;
+                if(data.reconnect){
+                    this.player.x = data.x
+                    this.player.y = data.y
+                }
             }
 
             // player.spriteBody.play(ply.currentDirection + '_down1', true);
@@ -885,6 +930,8 @@ export default class GameScene extends Phaser.Scene {
                 }
             }
         }
+
+        localStorage.setItem("reconnectionData", JSON.stringify({mapName:this.mapName, playerId:this.playerId, players: this.players, x:this.player.x, y:this.player.y}));
 
         // Ensure countdown displays 0 before transitioning
         if (this.countdownText) {

@@ -254,7 +254,6 @@ io.on("connection", (socket) => {
     //TODO: naprawic usuwanie graczy i zmienic zeby po uuid bylo (maybe sesja pozniej), do tego sensownie playerid trzymac i uzywac
     socket.on("disconnect", () => {
         delete sockets[socket.id];
-        delete players[playerId];
         delete mapPreferences[playerId];
         mapCreatedCount = 0; // Zresetuj licznik
 
@@ -270,7 +269,25 @@ io.on("connection", (socket) => {
     });
 
 
+    socket.on("reconnect", (id)=>{
 
+        const exists = Object.values(sockets).find(x => x.id === id) !== undefined;
+        if(!exists){
+            socket.emit({reconnectSuccess:false});
+            return;
+        }
+        sockets[socket.id] = {nick:"reconnect", id:id};
+        
+        const data = {
+            mapName:mapName,
+            players:players,
+            playerId : id,
+            socket: socket,
+            reconnectSuccess: true
+        }
+        console.log("SEND RECONNECT!");
+        socket.emit("reconnectionData",data);
+    })
 
 
 
