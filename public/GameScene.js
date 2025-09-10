@@ -1,8 +1,7 @@
 export default class GameScene extends Phaser.Scene {
 
     HP_BAR_TAG = "hp_bar";
-    mapHeight = 0;
-    mapWidth = 0;
+
     constructor() {
         super("GameScene");
 
@@ -100,8 +99,6 @@ export default class GameScene extends Phaser.Scene {
         this.socket.on('update', (data) => { this.updatePlayers(data); });
 
         this.socket.on('newBomb', (data) => { this.newBomb(data); });
-
-        this.socket.on('explosionDetails', (data)=>{this.animateExplosion(data);})
 
     }
 
@@ -205,17 +202,17 @@ export default class GameScene extends Phaser.Scene {
         const wallsLayer = map.createLayer("wallsLayer", tileset, 0, 0);
 
         //tworzenie mapArray ktory zostanie wyslany do servera
-        this.mapHeight = map.height;
-        console.log("Map height in tiles:", this.mapHeight);
-        this.mapWidth = map.width;
+        const mapHeight = map.height;
+        console.log("Map height in tiles:", mapHeight);
+        const mapWidth = map.width;
         //tworzenie mapy
-        const mapArray = Array.from({ length: this.mapHeight }, () =>
-            Array.from({ length: this.mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
+        const mapArray = Array.from({ length: mapHeight }, () =>
+            Array.from({ length: mapWidth }, () => ({ bomb: null, powerup: false, wall: false }))
         );
 
         // Sprawdź każdy kafelek w wallsLayer i ustaw wall = true jeśli kafelek istnieje
-        for (let y = 0; y < this.mapHeight; y++) {
-            for (let x = 0; x < this.mapWidth; x++) {
+        for (let y = 0; y < mapHeight; y++) {
+            for (let x = 0; x < mapWidth; x++) {
                 const tile = wallsLayer.getTileAt(x, y);
                 if (tile !== null) {
                     mapArray[y][x].wall = true;
@@ -250,12 +247,7 @@ export default class GameScene extends Phaser.Scene {
 
             // Create main sprite
             const sprite = this.add.sprite(0, 0, 'standing1r');
-            
-            const speedIndicatorSprite = this.add.sprite(0,20, 'speed-indic');
-            const slowIndicatorSprite = this.add.sprite(0,20, 'slow-indic');
-            
-            speedIndicatorSprite.setVisible(false);
-            slowIndicatorSprite.setVisible(false);
+
             // Create nickname text
             const nickname = this.add.text(0, -56, ply.nick || "NICK", {
                 fontSize: "16px",
@@ -274,7 +266,7 @@ export default class GameScene extends Phaser.Scene {
             hp_bar.name = this.HP_BAR_TAG;
 
             // Put sprite + text into a container
-            const player = this.add.container(spawnPoint.x, spawnPoint.y, [speedIndicatorSprite, slowIndicatorSprite,sprite, nickname, hp_bar ]);
+            const player = this.add.container(spawnPoint.x, spawnPoint.y, [sprite, nickname, hp_bar]);
             
             // Enable physics on the container
             this.physics.world.enable(player);
@@ -293,8 +285,6 @@ export default class GameScene extends Phaser.Scene {
             player.name = ply.id;
             player.hp_bar = hp_bar;
             player.spriteBody = sprite;
-            player.speedIndicator = speedIndicatorSprite;
-            player.slowIndicator = slowIndicatorSprite;
             if (ply.id == this.playerId) {
                 this.player = player;
             }
@@ -430,6 +420,10 @@ export default class GameScene extends Phaser.Scene {
             if (playerContainer && (ply.x != null) && (ply.y != null)) {
                 // console.log(players)
 
+
+                // console.log(ply, players);
+                playerContainer.hp_bar.setText(ply.health + "HP");
+
                 const direction = ply.currentDirection || "right"; // domyślnie w prawo
                 if (direction === "left") {
                     playerContainer.spriteBody.play('left', true);
@@ -441,23 +435,21 @@ export default class GameScene extends Phaser.Scene {
                 // } else if (direction === "down") {
                 //     playerContainer.spriteBody.setFlipX(false);
                 // }
-                const hasSpeedEffect = ply.speedEffectStamp >= Date.now();
-                const hasSlowEffect = ply.slowEffectStamp >= Date.now();
+
                 //jesli to jest nasz gracz
                 if (ply.id == this.playerId) {
+                    //TODO: to gowno
+                    this.player.hp_bar.setText(ply.health + " HP");
+                    console.log(ply.nick, ply.health);
 
                     // Domyślna prędkość
                     // this.speed = 300;
-                    if (hasSpeedEffect) {
-                        this.speed = 200; // Powerup SPEED
-                    }
-                    else if(hasSlowEffect){
-                        this.speed = 75; //powerup slow
+                    if (ply.powerups[0]) {
+                        this.speed = 300; // Powerup SPEED
                     }
                     else {
                         this.speed = 150; // Brak powerupu SPEED
                     }
-
                     //gracz ma 0hp
                     if (ply.health <= 0) {
                         this.isDead = true; // Ustaw flagę że gracz umarł
@@ -471,7 +463,8 @@ export default class GameScene extends Phaser.Scene {
                 else {
 
                     playerContainer.setPosition(ply.x, ply.y);
-               
+                    playerContainer.hp_bar.setText(ply.health + " HP");
+                    console.log(ply.nick, ply.health);
 
                     //gracz ma 0hp
                     if (ply.health <= 0) {
@@ -481,10 +474,6 @@ export default class GameScene extends Phaser.Scene {
                         // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
                     }
                 }
-
-                playerContainer.hp_bar.setText(ply.health + " HP");
-                playerContainer.slowIndicator.setVisible(hasSlowEffect);
-                playerContainer.speedIndicator.setVisible(hasSpeedEffect);
             }
 
 
@@ -588,23 +577,6 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    animateExplosion(area){
-        for (let y = 0; y < this.mapHeight; y++) {
-            for (let x = 0; x < this.mapWidth; x++) {
-                if(area[y][x]){
-                    const effect= this.add.sprite(y * 64 +32, x*64 + 32, 'bomb-explosion');
-                    
-                    effect.play('bomb-explode');
-                    effect.on('animationcomplete', () => {
-                        effect.destroy();
-                    });
-
-                }      
-            }
-            
-        }
-    }
-
     showDeathOverlay() {
         // Sprawdź czy overlay już istnieje
         if (this.deathOverlay) return;
@@ -689,30 +661,6 @@ export default class GameScene extends Phaser.Scene {
         // Przechowaj referencje do elementów overlay
         this.deathOverlayElements = [this.deathOverlay, panel, title, gameInfo, instruction];
     }
-    
-
-    // Funkcja pomocnicza do efektu "floating text"
- showFloatingText(x, y, text, color = "#fff") {
-    const floatingText = this.add.text(x, y, text, {
-        fontSize: "16px",
-        color: color,
-        stroke: "#000",
-        strokeThickness: 3
-    }).setOrigin(0.5);
-
-    // Animacja: przesunięcie w górę + fade out
-    this.tweens.add({
-        targets: floatingText,
-        y: y - 40,        // przesuń w górę
-        alpha: 0,         // znikanie
-        duration: 1500,   // czas w ms
-        ease: "Cubic.easeOut",
-        onComplete: () => {
-            floatingText.destroy(); // usuń po animacji
-        }
-    });
-}
-
 
 
 }
