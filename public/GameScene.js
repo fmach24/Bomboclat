@@ -454,7 +454,11 @@ export default class GameScene extends Phaser.Scene {
                 strokeThickness: 3
             }).setOrigin(0.5);
 
-            const hp_bar = this.add.text(0, -40, ply.health + " HP", {
+            const health_indicator = this.add.image(10, -40, 'heart1')
+                .setOrigin(0, 0.5) // left aligned, middle vertically
+                .setScale(0.7);
+
+            const hp_bar = this.add.text(0, -40, ply.health, {
                 fontSize: "16px",
                 color: "#47c070ff",
                 stroke: "#000",
@@ -464,14 +468,14 @@ export default class GameScene extends Phaser.Scene {
             hp_bar.name = this.HP_BAR_TAG;
 
             // Put sprite + text into a container
-            const player = this.add.container(spawnPoint.x, spawnPoint.y, [speedIndicatorSprite, slowIndicatorSprite, sprite, nickname, hp_bar]);
+            const player = this.add.container(spawnPoint.x, spawnPoint.y, [speedIndicatorSprite, slowIndicatorSprite, sprite, nickname, hp_bar, health_indicator]);
 
             // Enable physics on the container
             this.physics.world.enable(player);
 
             // Ustaw konkretny rozmiar hitboxa gracza
-            player.body.setSize(16, 16); // Hitbox 16x16 pikseli
-            player.body.setOffset(-8, 10); // Wyśrodkuj hitbox
+            player.body.setSize(48, 48); // Hitbox 16x16 pikseli
+            player.body.setOffset(-24, -24); // Wyśrodkuj hitbox
 
             // Add collisions
             this.physics.add.collider(player, wallsLayer);
@@ -539,7 +543,9 @@ export default class GameScene extends Phaser.Scene {
         }).setOrigin(0, 0.5);
         // === Group into container ===
         // Put bg first so it's behind the bomb and text
-        let bombWithText = this.add.container(0, 680, [bg, bomb, label, health_img, hp_label]);
+        let bombWithText = this.add.container(0, 570, [bg, bomb, label, health_img, hp_label]);
+        bombWithText.setZ(100);
+        bombWithText.setScrollFactor(0,0);
         console.log(bombWithText);
 
         this.hp_label = hp_label;
@@ -700,7 +706,7 @@ export default class GameScene extends Phaser.Scene {
                     }
                 }
 
-                playerContainer.hp_bar.setText(ply.health + " HP");
+                playerContainer.hp_bar.setText(ply.health);
                 playerContainer.slowIndicator.setVisible(hasSlowEffect);
                 playerContainer.speedIndicator.setVisible(hasSpeedEffect);
             }
