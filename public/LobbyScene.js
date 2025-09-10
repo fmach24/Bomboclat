@@ -9,13 +9,15 @@ export default class LobbyScene extends Phaser.Scene {
         this.startButton = null;
         this.maps = [
             { name: 'beach', displayName: 'Beach Map', previewKey: 'beachPreview' },
-            { name: 'forest', displayName: 'Forest Map', previewKey: 'forestPreview' }
+            { name: 'forest', displayName: 'Forest Map', previewKey: 'forestPreview' },
+            { name: 'portugal', displayName: 'Portugal Map', previewKey: 'portugalPreview' }
         ];
         this.currentMapIndex = 0;
         
         this.playerSkins = [
             { name: 'bombardinho', displayName: 'Bombardinho', previewKey: 'bombardinhoPreview' },
-            { name: 'szczups', displayName: 'Szczups', previewKey: 'szczupsPreview' }
+            { name: 'filipek', displayName: 'Filipek', previewKey: 'filipekPreview' },
+            { name: 'guczo', displayName: 'Guczo', previewKey: 'guczoPreview' }
         ];
         this.currentSkinIndex = 0;
     }
@@ -24,16 +26,20 @@ export default class LobbyScene extends Phaser.Scene {
         // Załaduj miniaturki map do podglądu
         this.load.image('beachPreview', 'assets/beachTiles.png');
         this.load.image('forestPreview', 'assets/forestTiles.png');
-        
+        this.load.image('portugalPreview', 'assets/portugalTiles.png');
+
         // Załaduj podglądy skinów gracza
         this.load.image('bombardinhoPreview', 'assets/animations/bombardinho_down1.png');
-        this.load.image('szczupsPreview', 'assets/animations/szczups1.png');
+        this.load.image('filipekPreview', 'assets/animations/filipek_down1.png');
+        this.load.image('guczoPreview', 'assets/animations/Guczo1.png');
         
         // Można też załadować faktyczne mapy do generowania podglądu
         this.load.tilemapTiledJSON('beachMap', 'assets/beachMap.tmj');
         this.load.tilemapTiledJSON('forestMap', 'assets/forestMap.tmj');
         this.load.image('beachTiles', 'assets/beachTiles.png');
         this.load.image('forestTiles', 'assets/forestTiles.png');
+        this.load.tilemapTiledJSON('portugalMap', 'assets/portugalMap.tmj');
+        this.load.image('portugalTiles', 'assets/portugalTiles.png');   
     }
 
     create() {
