@@ -474,8 +474,8 @@ export default class GameScene extends Phaser.Scene {
             this.physics.world.enable(player);
 
             // Ustaw konkretny rozmiar hitboxa gracza
-            player.body.setSize(32, 48); // Hitbox 16x16 pikseli
-            player.body.setOffset(-16, -24); // Wyśrodkuj hitbox
+            player.body.setSize(32, 48); 
+            player.body.setOffset(-16, -24); 
 
             // Add collisions
             this.physics.add.collider(player, wallsLayer);
@@ -504,7 +504,7 @@ export default class GameScene extends Phaser.Scene {
         this.cameras.main.startFollow(this.player);
         this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
-        // 📌 Warstwa obiektów: Powerups
+    
         this.powerups = this.physics.add.group();
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
 
@@ -855,7 +855,9 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    animateExplosion(area) {
+    animateExplosion(area, map) {
+        console.log(JSON.stringify(area, null, 2));
+        console.log(JSON.stringify(map, null, 2));
 
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
