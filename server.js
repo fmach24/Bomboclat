@@ -17,7 +17,10 @@ const STANDARD_RANGE = 2;
 const BUFFED_RANGE = 4;
 const HP_MAX = 3;
 const MAX_ACTIVE_POWERUPS = 5;
-
+const SPEED_DURATION = 5 * 1000;
+const SLOW_DURATION = 10 * 1000;
+const MAX_CHARGES = 3;
+const MAX_HP =4;
 let currentActivePowerups = 0;
 let mapName = "";
 let mapHeight = 0;
@@ -200,7 +203,7 @@ io.on("connection", (socket) => {
             //speed
             case 0:
                 players[id].powerups[type] = true; // przyznaj powerup graczowi
-                players[id].speedEffectStamp = Date.now() + 10 * 1000;
+                players[id].speedEffectStamp = Date.now() + SPEED_DURATION;
                 break;
 
             //slow
@@ -209,7 +212,7 @@ io.on("connection", (socket) => {
                     //give everyone else the slow!
                     if (ply.id != id) {
                         ply.powerups[type] = true; // przyznaj powerup graczowi
-                        ply.slowEffectStamp = Date.now() + 10 * 1000;
+                        ply.slowEffectStamp = Date.now() + SLOW_DURATION;
                     }
                 });
 
@@ -218,13 +221,13 @@ io.on("connection", (socket) => {
             //bonus charges:
             case 2:
                 players[id].powerups[type] = true;
-                players[id].bonusCharges += 3;
+                players[id].bonusCharges = Math.min(players[id].bonusCharges + 1, MAX_CHARGES);
                 break;
 
             //HP
             case 3:
                 players[id].powerups[type] = true;
-                players[id].health++;
+                players[id].health = Math.min(players[id].health + 1, MAX_HP);
                 break;
         }
         currentActivePowerups--;
@@ -275,7 +278,7 @@ io.on("connection", (socket) => {
 
         //START HELPES:
 
-        const checkIfPlayerHit = (bomb, x, y) => {
+        const checkIfPlayerHit = (bomb, y, x) => {
             Object.values(players).forEach(p => {
                 // Player is a 64x64 box centered at p.x, p.y
                 const playerHalf = 32;
@@ -320,14 +323,16 @@ io.on("connection", (socket) => {
             );
             // order of checking: bomb range, world borders, wall
 
-
+            //MAP MA NAJPIER X A POZNIEJ Y TAK JAK SIE ZWYKLO PODAWAC
+            //AFFECTED AREA JEST TABLICA WIEC NAJPIERW NUMER WIERSZA (Y) POZNIEJ KOLUMNY
+            //WIZUALIZUJEMY SOBIE ZE TABLICA IDZIE W SZERZ. I MAMY TABLICE POD SOBA.
 
             // going left:
             x_offset = -1;
             y_offset = 0;
             while (Math.abs(x_offset) <= bomb.range &&
-                gridX + x_offset >= 0 &&
-                !map[gridY + y_offset][gridX + x_offset].wall) {
+                gridX + x_offset >= 0  && !map[gridX + x_offset][gridY + y_offset].wall
+                ) {
 
                 checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
@@ -338,8 +343,7 @@ io.on("connection", (socket) => {
             x_offset = 1;
             y_offset = 0;
             while (x_offset <= bomb.range &&
-                gridX + x_offset < mapWidth &&
-                !map[gridY + y_offset][gridX + x_offset].wall) {
+                gridX + x_offset < mapWidth && !map[gridX + x_offset][gridY + y_offset].wall) {
 
                 checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
@@ -349,9 +353,9 @@ io.on("connection", (socket) => {
             // going upwards:
             x_offset = 0;
             y_offset = 1;
-            while (y_offset <= bomb.range &&
+            while (y_offset <= bomb.range && 
                 gridY + y_offset < mapHeight &&
-                !map[gridY + y_offset][gridX + x_offset].wall) {
+            !map[gridX + x_offset][gridY + y_offset].wall) {
 
                 checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
@@ -363,7 +367,7 @@ io.on("connection", (socket) => {
             y_offset = -1;
             while (Math.abs(y_offset) <= bomb.range &&
                 gridY + y_offset >= 0 &&
-                !map[gridY + y_offset][gridX + x_offset].wall) {
+                !map[gridX + x_offset][gridY + y_offset].wall) {
 
                 checkIfPlayerHit(bomb, gridY + y_offset, gridX + x_offset);
                 affectedArea[gridY + y_offset][gridX + x_offset] = true;
@@ -375,7 +379,7 @@ io.on("connection", (socket) => {
             players[bomb.id].hasPlantedBomb = false;
 
             affectedArea[gridY][gridX] = true;
-            socket.emit("explosionDetails", affectedArea);
+            socket.emit("explosionDetails", affectedArea,map);
         };
 
         const isOnCooldown = (ply) => {

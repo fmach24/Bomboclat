@@ -474,8 +474,8 @@ export default class GameScene extends Phaser.Scene {
             this.physics.world.enable(player);
 
             // Ustaw konkretny rozmiar hitboxa gracza
-            player.body.setSize(32, 48); // Hitbox 16x16 pikseli
-            player.body.setOffset(-16, -24); // Wyśrodkuj hitbox
+            player.body.setSize(32, 48); 
+            player.body.setOffset(-16, -24); 
 
             // Add collisions
             this.physics.add.collider(player, wallsLayer);
@@ -504,7 +504,7 @@ export default class GameScene extends Phaser.Scene {
         this.cameras.main.startFollow(this.player);
         this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
-        // 📌 Warstwa obiektów: Powerups
+    
         this.powerups = this.physics.add.group();
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
 
@@ -514,42 +514,77 @@ export default class GameScene extends Phaser.Scene {
 
         //ADD BOMB COUNTER:
  
+        // Background for HUD
+        let bg = this.add.image(0, 0, 'frame')
+            .setOrigin(0, 0.5);
 
-        let bg = this.add.image(0, 0, 'frame') // white fill
-            .setOrigin(0, 0.5);               // left-middle anchor                  // optional black border
-
-        // === Bomb sprite ===
+        // === Bomb icon & counter ===
         let bomb = this.add.image(0, 0, 'bomba1')
             .setScale(0.6)
-            .setOrigin(0, 0.5); // left aligned, middle vertically
+            .setOrigin(0, 0.5);
 
-        // === Label ===
         let label = this.add.text(40, 0, this.player.bonusCharges + (this.player.hasPlantedBomb ? 0 : 1), {
             fontSize: "20px",
-            color: "#000",          // black text for contrast on white
-            stroke: "#fff",         // optional white stroke
-            strokeThickness: 2
-        }).setOrigin(0, 0.5);           // left aligned, middle vertically
-
-        let health_img = this.add.image(80, 0, 'heart1')
-            .setOrigin(0, 0.5); // left aligned, middle vertically
-
-        // === Label ===
-        let hp_label = this.add.text(120, 0, this.player.health, {
-            fontSize: "20px",
-            color: "#000",          // black text for contrast on white
-            stroke: "#fff",         // optional white stroke
+            color: "#000",
+            stroke: "#fff",
             strokeThickness: 2
         }).setOrigin(0, 0.5);
-        // === Group into container ===
-        // Put bg first so it's behind the bomb and text
-        let bombWithText = this.add.container(0, 570, [bg, bomb, label, health_img, hp_label]);
-        bombWithText.setZ(100);
-        bombWithText.setScrollFactor(0,0);
-        console.log(bombWithText);
 
+        // === Health icon & counter ===
+        let health_img = this.add.image(80, 0, 'heart1')
+            .setOrigin(0, 0.5);
+
+        let hp_label = this.add.text(120, 0, this.player.health, {
+            fontSize: "20px",
+            color: "#000",
+            stroke: "#fff",
+            strokeThickness: 2
+        }).setOrigin(0, 0.5);
+
+        // === Speed Powerup icon & counter ===
+        let speed_img = this.add.image(140, 0, 'speed1')
+            .setScale(0.6)
+            .setOrigin(0, 0.5);
+
+        const remainingSpeedTime = this.player.speedEffectStamp - Date.now() ;
+        let speed_label = this.add.text(180, 0, remainingSpeedTime > 0 ? remainingSpeedTime : "-", {
+            fontSize: "20px",
+            color: "#000",
+            stroke: "#fff",
+            strokeThickness: 2
+        }).setOrigin(0, 0.5);
+
+        // === Slow Powerup icon & counter ===
+        let slow_img = this.add.image(220, 0, 'mikstura1')
+            .setScale(0.6)
+            .setOrigin(0, 0.5);
+
+        const remainingSlowTime = this.player.slowEffectStamp - Date.now() ;
+        let slow_label = this.add.text(260, 0,  remainingSlowTime > 0 ? remainingSlowTime : "-", {
+            fontSize: "20px",
+            color: "#000",
+            stroke: "#fff",
+            strokeThickness: 2
+        }).setOrigin(0, 0.5);
+
+        // === Group everything into a single container ===
+        let hudContainer = this.add.container(0, 570, [
+            bg,
+            bomb, label,
+            health_img, hp_label,
+            speed_img, speed_label,
+            slow_img, slow_label
+        ]);
+
+        hudContainer.setZ(100);
+        hudContainer.setScrollFactor(0, 0); // HUD stays fixed on screen
+
+        // Save references for updating later
         this.hp_label = hp_label;
         this.bomb_label = label;
+        this.speed_label = speed_label;
+        this.slow_label = slow_label;
+
     }
 
 
@@ -691,6 +726,11 @@ export default class GameScene extends Phaser.Scene {
 
                     this.hp_label.setText(ply.health);
                     this.bomb_label.setText(ply.bonusCharges + (ply.hasPlantedBomb ? 0 : 1));
+
+                    const remainingSpeedTime = ply.speedEffectStamp - Date.now() ;
+                    const remainingSlowTime = ply.slowEffectStamp - Date.now();
+                    this.speed_label.setText( remainingSpeedTime > 0 ? Math.ceil(remainingSpeedTime/1000) : "-");
+                    this.slow_label.setText(remainingSlowTime > 0 ? Math.ceil(remainingSlowTime/1000) : "-");
                 }
                 else {
 
@@ -815,7 +855,9 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    animateExplosion(area) {
+    animateExplosion(area, map) {
+        console.log(JSON.stringify(area, null, 2));
+        console.log(JSON.stringify(map, null, 2));
 
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
