@@ -1,77 +1,98 @@
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  width: 100%;
-  height: 100%;
-  
 }
 
 body {
-  display: flex;
-  justify-content: center; 
-  align-items: center;     
-  min-height: 100vh;       
   margin: 0;
   padding: 0;
+  display: flex;
+  justify-content: center;    /* horizontally center */
   background-color: #000;
   font-family: "Jersey 10", sans-serif;
-  font-weight: 400;
-  font-style: normal;
+  color: whitesmoke;
+  min-height: 100vh;
 }
 
 .container {
-
+  display: flex;
+  flex-direction: column;
+  align-items: center;        /* center children horizontally */
+  gap: 20px;                  /* space between logo, game, powerups */
 }
 
+/* Logo */
+#logo img {
+  max-width: 220px;
+  height: auto;
+  display: block;
+}
+
+/* Game container */
 #game-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   width: 800px;
   height: 600px;
-  position: relative;
-  margin: 0 auto;
+  background: #111;
+  border: 2px solid #444;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  padding: 10px;
-  color: #fff;
-  font-size: 32px;
-  border-top: 1px solid white;
+/* Powerups */
+.powerup-preview-side-menu {
+  width: 800px;           /* match game width */
+  padding: 6px 14px;
+  font-size: 18px;
+  text-align: left;
+  background: #0b0b0b;
+  border: 2px solid #444;
+  border-radius: 6px;
 }
 
-ul{
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-li{
-    display: flex;
-    align-items: center;
-}
-.powerup-preview-side-menu{
-    font-size: 20px;
-    color: whitesmoke;
-    padding-bottom: 30px;
-
+.powerup-preview-side-menu .title {
+  display: block;
+  font-size: 26px;
+  margin-bottom: 10px;
 }
 
-.powerup-preview-side-menu > ul > li >span{
-    padding-left: 5px;
-    
+.powerup-preview-side-menu ul {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* two columns */
+  gap: 10px 18px;
+  align-items: start;
 }
 
-.jersey-10-regular {
-  font-family: "Jersey 10", sans-serif;
-  font-weight: 400;
-  font-style: normal;
+.powerup-preview-side-menu li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.powerup-preview-side-menu li img {
+  width: 36px;
+  height: 36px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+.powerup-preview-side-menu li span {
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* highlight only the bracketed info */
+.powerup-info {
+  color: #df7126;        /* bright cyan highlight */
+  margin-left: 4px;
+  font-size: 0.9em;      /* slightly smaller than main text */
+}
+
+.powerup-preview-side-menu .title {
+  display: block;
+  font-size: 26px;
+  text-align: center;           /* center the title */
+  margin-bottom: 12px;          /* spacing between title and list */
+  padding-bottom: 6px;          /* spacing for the border line */
 }

@@ -17,18 +17,33 @@
 
 <body>
   <div class="container">
-    <div style="text-align: center;"><img src="/assets/logo.png"/></div>
+    <div style="text-align: center;"><img src="/assets/logo-smaller.png"/></div>
     
     <div id="game-container" style="width: 800; height: 600;"></div>
     <div class="powerup-preview-side-menu">
-      <span style="font-size: 30px;">
-        Powerups:
+      <span style="font-size: 30px;" class="title">
+        Powerups
       </span>
-      <ul>
-        <li><img src="/assets/animations/speed1.png"/> <span>Super speed </span></li>
-        <li><img src="/assets/animations/mikstura1.png"/><span>Super slow (beer-based magic potion)</span></li>
-        <li><img src="/assets/animations/szczups1.png"/><span style="padding-left: 5px;">More frequent bombs (sczczupak's blessing)</span></li>
-      </ul>
+      
+<ul>
+  <li>
+    <img src="/assets/animations/speed1.png"/>
+    <span>Super speed <span class="powerup-info">[10s]</span></span>
+  </li>
+  <li>
+    <img src="/assets/animations/mikstura1.png"/>
+    <span>Super slow (beer-based magic potion) <span class="powerup-info">[10s]</span></span>
+  </li>
+  <li>
+    <img src="/assets/animations/szczups1.png"/>
+    <span>One more bomb <span class="powerup-info">[max 3]</span></span>
+  </li>
+  <li>
+    <img src="/assets/animations/heart1.png"/>
+    <span>Additional HP <span class="powerup-info">[max 4]</span></span>
+  </li>
+</ul>
+
     </div>
 
   </div>
