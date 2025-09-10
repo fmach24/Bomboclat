@@ -50,9 +50,12 @@ export default class GameScene extends Phaser.Scene {
         this.load.image('standing2r', 'assets/animations/standing2r.png');
         this.load.spritesheet('bomb-explosion','assets/animations/bomb-explosion.png', {frameWidth:16, frameHeight:16});
 
+        
 
         this.load.image('slow-indic', 'assets/slow_indic.png');
         this.load.image('speed-indic', 'assets/speed_indic.png');
+        this.load.spritesheet('heart-idle', 'assets/animations/heart-spritesheet.png', {frameWidth:32,frameHeight:32});
+        this.load.image('heart1', 'assets/animations/heart1.png');
         //breakables
         // this.load.spritesheet("breakable1x1", "assets/breakable1x1.png", {
         //     frameWidth: 64,
@@ -178,7 +181,14 @@ export default class GameScene extends Phaser.Scene {
             frames: this.anims.generateFrameNumbers('bomb-explosion', {start:0, end:2}),
             frameRate:10,
             repeat:0
-        })
+        });
+
+        this.anims.create({
+            key:'heart-idle', 
+            frames:this.anims.generateFrameNames('heart-idle', {start:0, end:4}),
+            frameRate:10,
+            repeat:-1
+        });
     }
 
 
@@ -342,14 +352,16 @@ export default class GameScene extends Phaser.Scene {
         const animationKeys = {
             0: 'speed-animation',
             1: 'mikstura-animation',
-            2: 'szczupas-animation'
+            2: 'szczupas-animation',
+            3: 'heart-idle'
         };
 
         // Mapowanie typów na pierwszy frame (do wyświetlenia przed animacją)
         const firstFrameKeys = {
             0: 'speed1',
             1: 'mikstura1',
-            2: 'szczups1'
+            2: 'szczups1',
+            3: 'heart1'
         };
 
         const animationKey = animationKeys[type];
@@ -384,7 +396,10 @@ export default class GameScene extends Phaser.Scene {
                     this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "Slow Effect", "#639bff");
                     break;
                 case 2:
-                    this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "+3 BOMBS", "#ac3232");
+                    this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "+3 Bombs", "#d77bba");
+                    break;
+                case 3:
+                    this.showFloatingText(this.player.x + offsetX, this.player.y - 20, "+1 Health", "#6abe30");
                     break;
             }
             

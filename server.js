@@ -163,7 +163,7 @@ io.on("connection", (socket) => {
                 while (true) {
                     const x = Math.floor(Math.random() * mapWidth);
                     const y = Math.floor(Math.random() * mapHeight);
-                    const type = Math.floor(Math.random() * 3);
+                    const type = Math.floor(Math.random() * 4);
 
                     if (!map[y][x].wall && !map[y][x].bomb && !map[y][x].powerup) {
                         map[y][x].powerup = true;
@@ -179,7 +179,7 @@ io.on("connection", (socket) => {
                     console.log("POWERUP:", x, y);
                     console.log("TYPE:", type);
                 }
-            }, 10000); // co 10 sekund
+            }, 5000); // co 10 sekund
         }
     });
 
@@ -218,6 +218,12 @@ io.on("connection", (socket) => {
             case 2:
                 players[id].powerups[type] = true;
                 players[id].bonusCharges += 3;
+                break;
+
+            //HP
+            case 3:
+                players[id].powerups[type] = true;
+                players[id].health++;
                 break;
         }
         currentActivePowerups--;
@@ -270,19 +276,36 @@ io.on("connection", (socket) => {
 
         const checkIfPlayerHit = (bomb, x, y) => {
             Object.values(players).forEach(p => {
-                const playerGridX = toMapIndex(snapToGrid(p.x, 64), 64);
-                const playerGridY = toMapIndex(snapToGrid(p.y, 64), 64);
+                // Player is a 64x64 box centered at p.x, p.y
+                const playerHalf = 32;
+                const playerLeft = p.x - playerHalf;
+                const playerRight = p.x + playerHalf;
+                const playerTop = p.y - playerHalf;
+                const playerBottom = p.y + playerHalf;
 
-                if (playerGridX == x && playerGridY == y) {
+                // Bomb is assumed to be grid aligned at (x, y) with size 64
+                const bombSize = 64;
+                const bombHalf = bombSize / 2;
+                const bombCenterX = x * bombSize + bombHalf;
+                const bombCenterY = y * bombSize + bombHalf;
 
-                    //TODO: probably wanna have some animation for damage
+                const bombLeft = bombCenterX - bombHalf;
+                const bombRight = bombCenterX + bombHalf;
+                const bombTop = bombCenterY - bombHalf;
+                const bombBottom = bombCenterY + bombHalf;
+
+                // Axis-Aligned Bounding Box (AABB) overlap check
+                const overlapX = playerLeft < bombRight && playerRight > bombLeft;
+                const overlapY = playerTop < bombBottom && playerBottom > bombTop;
+
+                if (overlapX && overlapY) {
                     p.health--;
-                    //TODO: mechanika co jesli gracz ma 0hp
+
                     io.emit('update', players);
                 }
+    });
+};
 
-            });
-        }
 
         const detonateBomb = (gridX, gridY, bomb) => {
             // TODO: TUTAJ jest hardcoded xy mapy, teraz jest zdefiniowane wyzej przy tworzeniu mapy, ale nie zmieniam tu bo nw czy sie nie rozjebie cos
