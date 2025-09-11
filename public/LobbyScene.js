@@ -2,7 +2,7 @@
 const socket = io();
 export default class LobbyScene extends Phaser.Scene {
 
-    TRY_RECONNECT = false;
+    TRY_RECONNECT = true;
 
     constructor() {
         super('LobbyScene');
