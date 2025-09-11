@@ -431,6 +431,6 @@ io.on("connection", (socket) => {
 //     console.log("Server listening on http://localhost:3000");
 // });
 
-server.listen(3000, '0.0.0.0', () => {
-  console.log("Server listening on http://0.0.0.0:3000");
+server.listen(5678, '0.0.0.0', () => {
+  console.log("Server listening on http://0.0.0.0:5678");
 });
