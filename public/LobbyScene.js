@@ -11,7 +11,7 @@ export default class LobbyScene extends Phaser.Scene {
         this.startButton = null;
         this.maps = [
             { name: 'beach', displayName: 'Beach Map', previewKey: 'beachPreview' },
-            { name: 'forest', displayName: 'Forest Map', previewKey: 'forestPreview' },
+            { name: 'goldMine', displayName: 'Gold Mine Map', previewKey: 'goldMinePreview' },
             { name: 'portugal', displayName: 'Portugal Map', previewKey: 'portugalPreview' }
         ];
         this.currentMapIndex = 0;
@@ -27,7 +27,7 @@ export default class LobbyScene extends Phaser.Scene {
     preload() {
         // Załaduj miniaturki map do podglądu
         this.load.image('beachPreview', 'assets/beachMapPreview.png');
-        this.load.image('forestPreview', 'assets/forestTiles.png');
+        this.load.image('goldMinePreview', 'assets/goldMinePreview.png');
         this.load.image('portugalPreview', 'assets/portugalMapPreview.png');
 
         // Załaduj podglądy skinów gracza
@@ -37,9 +37,9 @@ export default class LobbyScene extends Phaser.Scene {
         
         // Można też załadować faktyczne mapy do generowania podglądu
         this.load.tilemapTiledJSON('beachMap', 'assets/beachMap.tmj');
-        this.load.tilemapTiledJSON('forestMap', 'assets/forestMap.tmj');
+        this.load.tilemapTiledJSON('goldMineMap', 'assets/goldmineMap.tmj');
         this.load.image('beachTiles', 'assets/beachTiles.png');
-        this.load.image('forestTiles', 'assets/forestTiles.png');
+        this.load.image('goldMineTiles', 'assets/goldmineTiles.png');
         this.load.tilemapTiledJSON('portugalMap', 'assets/portugalMap.tmj');
         this.load.image('portugalTiles', 'assets/portugalTiles.png');   
 

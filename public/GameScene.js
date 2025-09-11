@@ -13,9 +13,10 @@ export default class GameScene extends Phaser.Scene {
         //mapy
         this.load.tilemapTiledJSON("beachMap", "assets/beachMap.tmj");
         this.load.image("beachTiles", "assets/beachTiles.png");
+        this.load.image("grave", "assets/animations/grave.png");
 
-        this.load.tilemapTiledJSON("forestMap", "assets/forestMap.tmj");
-        this.load.image("forestTiles", "assets/forestTiles.png");
+        this.load.tilemapTiledJSON("goldMineMap", "assets/goldmineMap.tmj");
+        this.load.image("goldMineTiles", "assets/goldmineTiles.png");
 
         this.load.tilemapTiledJSON("portugalMap", "assets/portugalMap.tmj");
         this.load.image("portugalTiles", "assets/portugalTiles.png");
@@ -534,7 +535,7 @@ export default class GameScene extends Phaser.Scene {
         // this.cameras.main.startFollow(this.player);
         // this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
-        this.physics.add.collider(this.player.body,this.bombGroup);
+        this.physics.add.collider(this.player,this.bombGroup);
         this.powerups = this.physics.add.group();
         // const powerupSpawns = map.getObjectLayer("powerupSpawns");
 
@@ -759,6 +760,7 @@ export default class GameScene extends Phaser.Scene {
                         // this.player.setTint(0xff0000); // na czerwono
                         playerContainer.setVisible(false);
                         playerContainer.setActive(false); // usuń gracza z gry
+                        this.physics.add.sprite(playerContainer.x, playerContainer.y, 'grave').setOrigin(0.5, 0);
                         // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
                     }
 
@@ -779,7 +781,8 @@ export default class GameScene extends Phaser.Scene {
                     if (ply.health <= 0) {
                         // this.player.setTint(0xff0000); // na czerwono
                         playerContainer.setVisible(false); // ukryj gracza
-                        playerContainer.setActive(false); // wyłącz gracza
+                        playerContainer.setActive(false);
+                        this.physics.add.sprite(playerContainer.x, playerContainer.y, 'grave').setOrigin(0.5, 0);
                         // Możesz też dodać tutaj jakieś powiadomienie o przegranej lub przycisk restartu
                     }
                 }
