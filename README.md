@@ -127,7 +127,7 @@ const MAX_ACTIVE_POWERUPS = 5; // Max powerups on map
 
 ## 🎉 Acknowledgments
 
-- Inspired by the classic Bomberman series
+- Inspired by the classic Bomberman series and Party Time with Winnie the Pooh
 - Thanks to the Phaser.js and Tiled communities
 
 ---
