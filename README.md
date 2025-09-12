@@ -1,8 +1,7 @@
-# 💣 Bomboclat - Online Multiplayer Bomberman
+# 💣 Bombardinho - Online Multiplayer Bomberman
 
 A modern, web-based multiplayer Bomberman game built with Node.js, Socket.IO, and Phaser 3. Experience classic Bomberman gameplay with friends in real-time!
 
-![Game Preview](https://img.shields.io/badge/Status-Active%20Development-green)
 ![Players](https://img.shields.io/badge/Players-2--4-blue)
 ![Platform](https://img.shields.io/badge/Platform-Web-orange)
 
@@ -10,10 +9,8 @@ A modern, web-based multiplayer Bomberman game built with Node.js, Socket.IO, an
 
 ### Core Gameplay
 - **Real-time multiplayer** for 2-4 players
-- **Classic Bomberman mechanics** with bombs, explosions, and destructible walls
+- **Classic Bomberman mechanics** with bombs, explosions, and powerups
 - **Multiple character skins**: Bombardinho, Filipek, and Guczo
-- **Health system** with up to 4 HP per player
-- **Respawn mechanics** with grave markers
 
 ### Power-ups System
 - 🏃 **Speed Boost** - Temporary movement speed increase (7.5s)
@@ -23,9 +20,9 @@ A modern, web-based multiplayer Bomberman game built with Node.js, Socket.IO, an
 
 ### Maps
 Choose from multiple themed battlegrounds:
-- 🏖️ **Beach Map** - Tropical island setting
-- ⛏️ **Gold Mine** - Underground mining facility
-- 🇵🇹 **Portugal Map** - Portuguese-themed environment
+- 🏖️ **Beach Map**
+- ⛏️ **Gold Mine**
+- 🇵🇹 **Portugal Map**
 
 ### Game Mechanics
 - **Smart bomb placement** with grid-based positioning
@@ -44,8 +41,8 @@ Choose from multiple themed battlegrounds:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/fmach24/Bomboclat.git
-   cd Bomboclat
+   git clone https://github.com/fmach24/Bombardinho.git
+   cd Bombardinho
    ```
 
 2. **Install dependencies**
@@ -60,12 +57,6 @@ Choose from multiple themed battlegrounds:
 
 4. **Open your browser**
    Navigate to `http://localhost:5678`
-
-### For Development
-```bash
-npm run dev    # Start development server with Vite
-npm run build  # Build for production
-```
 
 ## 🎯 How to Play
 
@@ -103,7 +94,7 @@ Be the last player standing! Use bombs strategically to eliminate opponents whil
 ## 🏗️ Project Structure
 
 ```
-Bomboclat/
+Bombardinho/
 ├── server.js              # Main server file
 ├── package.json           # Dependencies and scripts
 ├── public/                # Client-side files
@@ -134,38 +125,10 @@ const MAX_ACTIVE_POWERUPS = 5; // Max powerups on map
 - Default port: `5678`
 - Supports local network play (`0.0.0.0`)
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 🐛 Known Issues
-
-- Map creation synchronization needs improvement
-- Player reconnection could be more robust
-- Need better error handling for network issues
-
-## 📈 Future Enhancements
-
-- [ ] Tournament mode
-- [ ] More maps and themes
-- [ ] Additional power-ups
-- [ ] Spectator mode
-- [ ] Leaderboards
-- [ ] Mobile device support
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🎉 Acknowledgments
 
 - Inspired by the classic Bomberman series
-- Built with love for retro gaming enthusiasts
-- Thanks to the Phaser.js and Socket.IO communities
+- Thanks to the Phaser.js and Tiled communities
 
 ---
 
